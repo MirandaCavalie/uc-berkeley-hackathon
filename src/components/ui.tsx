@@ -93,27 +93,22 @@ export function ModeBadge({ mode }: { mode: WorkMode }) {
   );
 }
 
-export function SectionTitle({ eyebrow, title, children, action }: { eyebrow?: string; title: ReactNode; children?: ReactNode; action?: ReactNode }) {
+export function SectionTitle({ title, meta, action }: { title: ReactNode; meta?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="mb-4 flex items-end justify-between gap-4">
-      <div>
-        {eyebrow && <div className="mb-1 text-[11.5px] font-medium tracking-wide text-muted uppercase">{eyebrow}</div>}
-        <h2 className="text-[17px] font-semibold tracking-tight text-ink">{title}</h2>
-        {children && <p className="mt-1 max-w-2xl text-[13.5px] leading-relaxed text-muted">{children}</p>}
-      </div>
+    <div className="mb-3 flex items-center justify-between gap-4">
+      <h2 className="flex items-baseline gap-2 text-[15px] font-semibold tracking-tight text-ink">
+        {title}
+        {meta != null && <span className="text-[13px] font-normal text-muted tabular-nums">{meta}</span>}
+      </h2>
       {action}
     </div>
   );
 }
 
-export function PageHeader({ eyebrow, title, children, actions }: { eyebrow: string; title: ReactNode; children?: ReactNode; actions?: ReactNode }) {
+export function PageHeader({ title, actions }: { title: ReactNode; actions?: ReactNode }) {
   return (
-    <header className="mb-8 flex flex-wrap items-end justify-between gap-6">
-      <div className="max-w-3xl">
-        <div className="mb-2 text-[12px] font-medium tracking-wide text-muted uppercase">{eyebrow}</div>
-        <h1 className="font-display text-[40px] leading-[1.05] text-ink md:text-[46px]">{title}</h1>
-        {children && <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-ink-2">{children}</p>}
-      </div>
+    <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
+      <h1 className="font-display text-[28px] leading-tight text-ink">{title}</h1>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
   );

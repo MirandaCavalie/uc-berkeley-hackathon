@@ -6,7 +6,7 @@ import Link from "next/link";
 import { SplitBar } from "@/components/radar/split-bar";
 import { Badge, Card, PageHeader, ScoreRing, SectionTitle } from "@/components/ui";
 import { isHex } from "@/lib/color";
-import { compositeScore, creativeShare, rankOpportunities } from "@/lib/scoring";
+import { applyStepReviews, compositeScore, creativeShare, rankOpportunities } from "@/lib/scoring";
 import { useStore } from "@/lib/store";
 
 export function Overview() {
@@ -18,10 +18,12 @@ export function Overview() {
   const launch = useStore((s) => s.launch);
   const studio = useStore((s) => s.studio);
   const events = useStore((s) => s.events);
+  const stepReviews = useStore((s) => s.stepReviews);
 
   const ranked = radar ? rankOpportunities(radar.result.opportunities) : [];
   const pilot = radar?.result.opportunities.find((o) => o.id === radar.result.recommendedPilotId) ?? ranked[0];
-  const split = radar ? creativeShare(radar.result.steps) : null;
+  const steps = radar ? applyStepReviews(radar.result.steps, stepReviews) : [];
+  const split = radar ? creativeShare(steps) : null;
 
   const approvedAssets = launch ? launch.result.assets.filter((a) => ["approved", "edited"].includes(launch.decisions[a.id] ?? "")).length : 0;
   const chosen = studio?.result.territories.find((t) => t.id === studio.chosenId);
@@ -31,7 +33,7 @@ export function Overview() {
       href: "/review",
       icon: MessagesSquare,
       name: "Review Loop",
-      pitch: "Fragmented feedback → one decision and a revision brief.",
+      pitch: "Feedback → revision brief",
       status: review
         ? review.approvedAt
           ? `Brief approved · ${review.result.comments.length} comments, ${review.result.conflicts.length} conflicts surfaced`
@@ -44,7 +46,7 @@ export function Overview() {
       href: "/launch",
       icon: Rocket,
       name: "Campaign Launch",
-      pitch: "Approved brief → every channel spec, checked against the brand book.",
+      pitch: "Brief → channel assets",
       status: launch ? `${approvedAssets}/${launch.result.assets.length} assets approved` : null,
       done: !!launch && approvedAssets === launch.result.assets.length,
       recommended: pilot?.workflow === "launch",
@@ -53,7 +55,7 @@ export function Overview() {
       href: "/studio",
       icon: Sparkles,
       name: "Creative Studio",
-      pitch: "References and theme → divergent territories. The team chooses.",
+      pitch: "References → creative directions",
       status: studio ? (chosen ? `Direction chosen: ${chosen.name}` : `${studio.result.territories.length} territories to review`) : null,
       done: !!chosen,
       recommended: pilot?.workflow === "studio",
@@ -62,61 +64,36 @@ export function Overview() {
 
   return (
     <div>
-      <PageHeader
-        eyebrow={`${workspace.company} · Overview`}
-        title={
-          <>
-            Let AI take the busywork. <span className="text-muted italic">Keep the creative work creative.</span>
-          </>
-        }
-      >
-        Marketing teams are adopting AI before they know which part of their workflow actually deserves it. CreativeOps Radar maps your real process from
-        the evidence, shows what to automate and what to protect, and runs the first pilot with people in control.
-      </PageHeader>
+      <PageHeader title={workspace.company} />
 
       {!radar ? (
-        <Card className="enter mb-10 overflow-hidden">
-          <div className="grid md:grid-cols-[1.2fr_1fr]">
-            <div className="p-7">
-              <Badge tone="accent">Start here</Badge>
-              <h2 className="font-display mt-3 text-[32px] leading-tight">Run Radar on your campaign evidence.</h2>
-              <p className="mt-2 max-w-md text-[14px] leading-relaxed text-ink-2">
-                {evidence.length} files are loaded{workspace.synthetic ? " from a clearly-labeled synthetic sample" : ""}: a brief, feedback from Slack, email and Figma, an approval timeline, a
-                request queue, and channel results.
-              </p>
-              <Link href="/radar" className="pressable mt-5 inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-4 text-[14px] font-medium text-white hover:bg-[#3029c4]">
-                <Radar className="size-4" /> Open Radar <ArrowRight className="size-4" />
-              </Link>
+        <Card className="enter mb-10 flex flex-wrap items-center justify-between gap-4 p-6">
+          <div>
+            <div className="text-[17px] font-semibold tracking-tight">Map your workflow</div>
+            <div className="mt-0.5 text-[13px] text-muted">
+              {evidence.length} evidence files ready{workspace.synthetic ? " · synthetic sample" : ""}
             </div>
-            <ol className="grid gap-px bg-line">
-              {[
-                ["Discover", "Reconstruct the workflow from briefs, feedback, approvals, and results."],
-                ["Decide", "See what to automate, what AI should assist, and what stays creative — ranked transparently."],
-                ["Pilot", "Run the top opportunity as a human-approved workflow and measure it against your baseline."],
-              ].map(([t, d], i) => (
-                <li key={t} className="flex gap-4 bg-surface p-5">
-                  <span className="font-display text-[26px] leading-none text-faint">{i + 1}</span>
-                  <div>
-                    <div className="text-[14px] font-semibold">{t}</div>
-                    <div className="text-[13px] leading-relaxed text-muted">{d}</div>
-                  </div>
-                </li>
-              ))}
-            </ol>
+          </div>
+          <div className="flex gap-2">
+            <Link href="/learn" className="pressable inline-flex h-10 items-center rounded-lg bg-surface px-4 text-[14px] font-medium shadow-card hover:bg-[#fbfaf7]">
+              How it learns
+            </Link>
+            <Link href="/radar" className="pressable inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-4 text-[14px] font-medium text-white hover:bg-[#3029c4]">
+              <Radar className="size-4" /> Open Radar
+            </Link>
           </div>
         </Card>
       ) : (
         <div className="mb-10 grid gap-4 lg:grid-cols-[1.25fr_1fr]">
           <Card className="enter p-6">
-            <div className="mb-1 text-[11.5px] font-medium tracking-wide text-muted uppercase">Where the hours go</div>
             <div className="flex flex-wrap items-baseline gap-x-3">
-              <span className="font-display text-[44px] leading-none">{split ? split.automatePct + split.assistPct : 0}%</span>
-              <span className="text-[14px] text-ink-2">of tracked hours is work AI can take or assist</span>
+              <span className="font-display text-[40px] leading-none tabular-nums">{split ? split.automatePct + split.assistPct : 0}%</span>
+              <span className="text-[14px] text-ink-2">of hours AI can take or assist</span>
             </div>
-            <p className="mt-1 text-[13px] text-muted">
-              {split?.humanPct}% stays with people — concept, review judgment, craft, and approval. ≈{Math.round(split?.total ?? 0)} h / month across {radar.result.steps.length} steps.
-            </p>
-            <div className="mt-5">{radar && <SplitBar steps={radar.result.steps} compact />}</div>
+            <div className="mt-1 text-[12.5px] text-muted tabular-nums">
+              ≈{Math.round(split?.total ?? 0)} h / month · {radar.result.steps.length} steps
+            </div>
+            <div className="mt-5">{radar && <SplitBar steps={steps} compact />}</div>
             <div className="mt-3 flex gap-4 text-[12px] text-muted">
               <Legend className="bg-automate" label={`Automate ${split?.automatePct}%`} />
               <Legend className="bg-assist" label={`AI-assisted ${split?.assistPct}%`} />
@@ -130,12 +107,11 @@ export function Overview() {
                 <ScoreRing value={compositeScore(pilot.scores)} />
               </div>
               <div className="text-[18px] font-semibold tracking-tight">{pilot.title}</div>
-              <p className="mt-1.5 line-clamp-3 text-[13px] leading-relaxed text-ink-2">{pilot.problem}</p>
-              <div className="mt-3 text-[12.5px] text-muted">
+              <div className="mt-2 text-[12.5px] text-muted">
                 <span className="font-medium text-ink-2">Metric:</span> {pilot.metric}
               </div>
               <Link href="/radar" className="mt-4 inline-flex items-center gap-1 text-[13px] font-medium text-accent hover:underline">
-                See the evidence <ArrowRight className="size-3.5" />
+                Evidence <ArrowRight className="size-3.5" />
               </Link>
             </Card>
           )}
@@ -143,9 +119,7 @@ export function Overview() {
       )}
 
       <section className="mb-10">
-        <SectionTitle eyebrow="Pilots" title="Workflows">
-          Each one is the AI-assisted version of a step Radar flags — with a human gate before anything ships.
-        </SectionTitle>
+        <SectionTitle title="Workflows" />
         <div className="grid gap-3 md:grid-cols-3">
           {workflows.map((w, i) => {
             const Icon = w.icon;
@@ -179,7 +153,7 @@ export function Overview() {
 
       <section className="grid gap-4 md:grid-cols-[1fr_1.3fr]">
         <div className="space-y-3">
-          <SectionTitle eyebrow="Foundation" title="Shared context" />
+          <SectionTitle title="Context" />
           <Link href="/brand" className="lift pressable flex items-center gap-3 rounded-xl bg-surface p-4 shadow-card">
             <div className="flex h-9 overflow-hidden rounded-md">
               {brand.colors.slice(0, 5).map((c, i) => (
@@ -210,9 +184,9 @@ export function Overview() {
           </Link>
         </div>
         <div>
-          <SectionTitle eyebrow="Pilot log" title="Activity" />
+          <SectionTitle title="Activity" />
           <Card className="divide-y divide-line">
-            {events.length === 0 && <div className="px-4 py-8 text-center text-[13px] text-faint">Runs, approvals, and exports show up here.</div>}
+            {events.length === 0 && <div className="px-4 py-8 text-center text-[13px] text-faint">No activity yet</div>}
             {events.slice(0, 8).map((e) => (
               <div key={e.id} className="flex gap-3 px-4 py-3">
                 <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-accent" />

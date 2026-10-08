@@ -1,4 +1,14 @@
 import type { Opportunity, ProcessStep, ScoreSet, WorkMode } from "./schemas";
+import type { StepReview } from "./types";
+
+export const stepKey = (step: Pick<ProcessStep, "name">) => step.name.trim().toLowerCase();
+
+export function applyStepReviews(steps: ProcessStep[], reviews: Record<string, StepReview>): ProcessStep[] {
+  return steps.map((s) => {
+    const r = reviews[stepKey(s)];
+    return r && r.mode !== s.mode ? { ...s, mode: r.mode } : s;
+  });
+}
 
 export const dimensions: {
   key: keyof ScoreSet;

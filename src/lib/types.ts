@@ -3,6 +3,7 @@ import type {
   RadarResult,
   ReviewResult,
   StudioResult,
+  WorkMode,
 } from "./schemas";
 
 export type EvidenceKind =
@@ -86,6 +87,11 @@ export interface StudioInput {
 }
 
 export type Decision = "approved" | "edited" | "rejected" | "pending";
+
+export interface StepReview {
+  mode: WorkMode;
+  confirmedAt: string;
+}
 
 export interface PilotEvent {
   id: string;

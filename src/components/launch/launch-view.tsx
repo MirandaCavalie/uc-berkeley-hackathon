@@ -40,12 +40,7 @@ export function LaunchView() {
   return (
     <div>
       <PageHeader
-        eyebrow="Workflow · Campaign Launch"
-        title={
-          <>
-            One approved idea. <span className="text-muted italic">Every channel, on brand.</span>
-          </>
-        }
+        title="Campaign Launch"
         actions={
           launch && !editing ? (
             <Button variant="secondary" icon={<Pencil className="size-3.5" />} onClick={() => setEditing(true)}>
@@ -53,15 +48,12 @@ export function LaunchView() {
             </Button>
           ) : null
         }
-      >
-        Channel adaptation is the most repetitive part of a launch. AI drafts every spec from the approved brief and checks it against your brand book; your
-        production designer and copywriter approve each asset.
-      </PageHeader>
+      />
 
       {showInput && (
         <Card className="enter mb-10 p-5">
           <div className="grid gap-5">
-            <Field label="Approved campaign brief">
+            <Field label="Campaign brief">
               <Textarea value={draft.brief} onChange={(e) => setDraft("launch", { brief: e.target.value })} className="max-h-[380px] min-h-48 font-mono text-[12.5px]" />
             </Field>
             <Field group label="Channels" hint={`${draft.channels.length} selected`}>
@@ -89,7 +81,7 @@ export function LaunchView() {
                 </Button>
               )}
               <Button variant="accent" loading={loading} disabled={draft.brief.trim().length < 20 || !draft.channels.length} onClick={generate} icon={<Rocket className="size-4" />}>
-                Generate channel matrix
+                Generate assets
               </Button>
             </div>
           </div>
@@ -137,8 +129,7 @@ function LaunchResults({ launch }: { launch: LaunchState }) {
       <Card className="enter p-5">
         <div className="grid gap-6 md:grid-cols-[1.2fr_1fr]">
           <div>
-            <div className="text-[11.5px] font-medium tracking-wide text-muted uppercase">Campaign</div>
-            <div className="font-display mt-1 text-[30px] leading-tight">{r.campaign.name}</div>
+            <div className="font-display text-[22px] leading-tight">{r.campaign.name}</div>
             <p className="mt-2 text-[13.5px] leading-relaxed text-ink-2">{r.campaign.keyMessage}</p>
             <dl className="mt-4 grid gap-x-6 gap-y-2 text-[12.5px] sm:grid-cols-2">
               <Row label="Audience" value={r.campaign.audience} />
@@ -177,16 +168,14 @@ function LaunchResults({ launch }: { launch: LaunchState }) {
 
       <section>
         <SectionTitle
-          eyebrow={`${approved.length} approved · ${rejected} rejected · ${r.assets.length - approved.length - rejected} to review`}
-          title="Channel matrix"
+          title="Assets"
+          meta={`${approved.length} approved · ${rejected} rejected · ${r.assets.length - approved.length - rejected} to review`}
           action={
             <Button variant="primary" disabled={!approved.length} onClick={exportCsv} icon={<Download className="size-3.5" />}>
               Export approved
             </Button>
           }
-        >
-          Edit any line inline. Brand rules re-check as you type; blocking issues must be fixed before approval.
-        </SectionTitle>
+        />
         <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-sunken">
           <div className="h-full rounded-full bg-good transition-[width] duration-500 ease-[var(--ease-out)]" style={{ width: `${pct}%` }} />
         </div>
@@ -209,10 +198,7 @@ function LaunchResults({ launch }: { launch: LaunchState }) {
             ))}
           </ul>
         </Card>
-        <HumanGate className="self-start">
-          <span className="font-medium">Out of scope by design:</span> nothing publishes to ad platforms automatically, and brand or legal approval is never automated. Export goes
-          to your existing DAM or trafficking sheet.
-        </HumanGate>
+        <HumanGate className="self-start">Nothing auto-publishes. Brand and legal approval stay human.</HumanGate>
       </section>
     </div>
   );

@@ -29,7 +29,6 @@ export function SplitBar({ steps, compact = false }: { steps: ProcessStep[]; com
                 <span className="text-[12.5px] text-muted tabular-nums">{Math.round(split.hours[m])} h / month</span>
               </div>
               <div className="text-[13px] font-medium">{modeMeta[m].label}</div>
-              <div className="text-[12.5px] leading-relaxed text-muted">{modeMeta[m].description}</div>
             </div>
           ))}
         </div>

@@ -4,7 +4,7 @@ import { Info, Radar } from "lucide-react";
 import { toast } from "sonner";
 import { EngineStamp, useTask } from "@/components/shared";
 import { Button, Card, Empty, PageHeader, SectionTitle, Skeleton } from "@/components/ui";
-import { rankOpportunities } from "@/lib/scoring";
+import { applyStepReviews, rankOpportunities } from "@/lib/scoring";
 import { useStore } from "@/lib/store";
 import { EvidencePanel } from "./evidence-panel";
 import { OpportunityCard } from "./opportunity-card";
@@ -17,6 +17,7 @@ export function RadarView() {
   const radar = useStore((s) => s.radar);
   const setRadar = useStore((s) => s.setRadar);
   const log = useStore((s) => s.log);
+  const stepReviews = useStore((s) => s.stepReviews);
   const { run, loading } = useTask("radar");
 
   async function analyze() {
@@ -35,44 +36,32 @@ export function RadarView() {
   return (
     <div>
       <PageHeader
-        eyebrow="Discover · Radar"
-        title={
-          <>
-            Find the work AI should take. <span className="text-muted italic">Keep the work that’s yours.</span>
-          </>
-        }
+        title="Radar"
         actions={
           <Button variant="accent" size="lg" loading={loading} disabled={!evidence.length} onClick={analyze} icon={<Radar className="size-4" />}>
             {radar ? "Re-run Radar" : "Run Radar"}
           </Button>
         }
-      >
-        Radar reads the real artifacts behind a campaign — briefs, feedback, approvals, requests, results — reconstructs how work actually flows, and ranks where AI
-        creates measurable value without touching creative judgment.
-      </PageHeader>
+      />
 
       <section className="mb-10">
-        <SectionTitle eyebrow="Step 1" title="Evidence">
-          Every finding links back to these files. Add your own exports from Slack, Figma, Asana, or email.
-        </SectionTitle>
+        <SectionTitle title="Evidence" meta={evidence.length} />
         <EvidencePanel />
       </section>
 
       {loading && <Scanning />}
 
       {!loading && !radar && (
-        <Empty icon={<Radar className="size-5" />} title="No analysis yet" action={<Button variant="primary" onClick={analyze} disabled={!evidence.length}>Run Radar on {evidence.length} files</Button>}>
-          Radar will map each step as automate, AI-assisted, or keep-creative, then rank pilots by impact, readiness, risk, and measurability.
-        </Empty>
+        <Empty icon={<Radar className="size-5" />} title="No analysis yet" action={<Button variant="primary" onClick={analyze} disabled={!evidence.length}>Run Radar on {evidence.length} files</Button>} />
       )}
 
       {!loading && radar && (
         <div className="space-y-12">
           <section>
-            <SectionTitle eyebrow="Step 2" title="Where your team’s hours go" />
+            <SectionTitle title="Hours by mode" />
             <Card className="p-6">
               <p className="mb-5 max-w-3xl text-[15px] leading-relaxed text-ink">{radar.result.summary}</p>
-              <SplitBar steps={radar.result.steps} />
+              <SplitBar steps={applyStepReviews(radar.result.steps, stepReviews)} />
               <div className="mt-5 border-t border-line pt-4">
                 <EngineStamp engine={radar.engine} createdAt={radar.createdAt} warning={stale ? "Evidence changed since this analysis. Re-run Radar to update." : radar.warning} />
               </div>
@@ -80,16 +69,12 @@ export function RadarView() {
           </section>
 
           <section>
-            <SectionTitle eyebrow="Step 3" title="Reconstructed workflow">
-              Click a step to see why it was classified that way and the evidence behind it.
-            </SectionTitle>
+            <SectionTitle title="Workflow" meta={`${radar.result.steps.length} steps`} />
             <ProcessMap steps={radar.result.steps} highlight={pilot?.stepIds ?? []} />
           </section>
 
           <section>
-            <SectionTitle eyebrow="Step 4" title="Ranked AI opportunities">
-              Ranked by a transparent model: impact, frequency, AI fit, data readiness, risk, effort, and measurability.
-            </SectionTitle>
+            <SectionTitle title="Opportunities" meta={ranked.length} />
             <div className="space-y-3">
               {ranked.map((o, i) => (
                 <OpportunityCard key={o.id} opp={o} rank={i + 1} index={i} recommended={o.id === pilot?.id} />
@@ -100,7 +85,7 @@ export function RadarView() {
           {radar.result.assumptions.length > 0 && (
             <section className="rounded-xl bg-sunken/70 p-4">
               <div className="mb-2 flex items-center gap-1.5 text-[12.5px] font-medium text-ink-2">
-                <Info className="size-3.5" /> Assumptions — validate these with the team
+                <Info className="size-3.5" /> Assumptions
               </div>
               <ul className="space-y-1">
                 {radar.result.assumptions.map((a) => (
@@ -125,7 +110,7 @@ function Scanning() {
           <span className="absolute inset-0 rounded-full border border-accent/30" />
           <span className="radar-sweep absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,transparent_0deg,var(--color-accent)_60deg,transparent_61deg)] opacity-40" />
         </span>
-        Reading evidence, reconstructing steps, scoring opportunities…
+        Analyzing…
       </div>
       <Skeleton className="h-40" />
       <div className="flex gap-3">

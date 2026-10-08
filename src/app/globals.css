@@ -3,8 +3,6 @@
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-instrument-serif);
-
   --color-paper: #f6f5f1;
   --color-surface: #ffffff;
   --color-sunken: #efede7;
@@ -60,9 +58,8 @@ body {
 }
 
 .font-display {
-  font-family: var(--font-display), ui-serif, Georgia, serif;
-  font-weight: 400;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  letter-spacing: -0.025em;
 }
 
 /* Pressable feedback: every button should feel like it heard the click. */

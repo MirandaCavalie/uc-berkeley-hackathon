@@ -23,9 +23,11 @@ import type {
   ReviewInput,
   ReviewState,
   StudioInput,
+  StepReview,
   StudioState,
   Workspace,
 } from "./types";
+import type { WorkMode } from "./schemas";
 
 interface Drafts {
   review: ReviewInput;
@@ -44,7 +46,10 @@ interface State {
   launch: LaunchState | null;
   studio: StudioState | null;
   events: PilotEvent[];
+  stepReviews: Record<string, StepReview>;
 
+  reviewStep: (key: string, mode: WorkMode) => void;
+  clearStepReview: (key: string) => void;
   setBrand: (patch: Partial<BrandKit>) => void;
   addEvidence: (item: Omit<EvidenceItem, "id" | "addedAt">) => void;
   updateEvidence: (id: string, patch: Partial<EvidenceItem>) => void;
@@ -85,6 +90,7 @@ const initial = () => ({
   launch: null,
   studio: null,
   events: [] as PilotEvent[],
+  stepReviews: {} as Record<string, StepReview>,
 });
 
 export const useStore = create<State>()(
@@ -92,6 +98,13 @@ export const useStore = create<State>()(
     (set) => ({
       ...initial(),
 
+      reviewStep: (key, mode) => set((s) => ({ stepReviews: { ...s.stepReviews, [key]: { mode, confirmedAt: now() } } })),
+      clearStepReview: (key) =>
+        set((s) => {
+          const next = { ...s.stepReviews };
+          delete next[key];
+          return { stepReviews: next };
+        }),
       setBrand: (patch) => set((s) => ({ brand: { ...s.brand, ...patch } })),
       addEvidence: (item) =>
         set((s) => ({ evidence: [...s.evidence, { ...item, id: `ev-${uid()}`, addedAt: now() }] })),

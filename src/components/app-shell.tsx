@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Layers, MessagesSquare, Radar, RotateCcw, Rocket, Sparkles, SwatchBook } from "lucide-react";
+import { Layers, MessagesSquare, Radar, RotateCcw, Rocket, Route, Sparkles, SwatchBook } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -10,16 +10,22 @@ import { useStore } from "@/lib/store";
 
 const nav = [
   { section: null, items: [{ href: "/", label: "Overview", icon: Layers }] },
-  { section: "Discover", items: [{ href: "/radar", label: "Radar", icon: Radar, hint: "Map & rank" }] },
+  {
+    section: "Discover",
+    items: [
+      { href: "/learn", label: "Learning", icon: Route },
+      { href: "/radar", label: "Radar", icon: Radar },
+    ],
+  },
   {
     section: "Workflows",
     items: [
-      { href: "/review", label: "Review Loop", icon: MessagesSquare, hint: "Feedback → brief" },
-      { href: "/launch", label: "Campaign Launch", icon: Rocket, hint: "Brief → channels" },
-      { href: "/studio", label: "Creative Studio", icon: Sparkles, hint: "Territories" },
+      { href: "/review", label: "Review Loop", icon: MessagesSquare },
+      { href: "/launch", label: "Campaign Launch", icon: Rocket },
+      { href: "/studio", label: "Creative Studio", icon: Sparkles },
     ],
   },
-  { section: "Foundation", items: [{ href: "/brand", label: "Brand Kit", icon: SwatchBook, hint: "Rules as code" }] },
+  { section: "Foundation", items: [{ href: "/brand", label: "Brand Kit", icon: SwatchBook }] },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -43,7 +49,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Logo />
           <div className="leading-tight">
             <div className="text-[14px] font-semibold tracking-tight">CreativeOps Radar</div>
-            <div className="text-[11.5px] text-muted">AI partner for creative teams</div>
+            
           </div>
         </Link>
 

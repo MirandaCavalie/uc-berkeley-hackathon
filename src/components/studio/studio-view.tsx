@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { ArrowUpRight, Check, Lightbulb, Sparkles, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { EngineStamp, HumanGate, useTask } from "@/components/shared";
-import { Badge, Button, Card, Empty, Field, Input, PageHeader, SectionTitle, Skeleton, Textarea } from "@/components/ui";
+import { Badge, Button, Card, Field, Input, PageHeader, SectionTitle, Skeleton, Textarea } from "@/components/ui";
 import { isHex, readableOn } from "@/lib/color";
 import type { Territory } from "@/lib/schemas";
 import { useStore } from "@/lib/store";
@@ -37,7 +37,6 @@ export function StudioView() {
     if (!already) {
       log({ workflow: "studio", title: "Creative direction chosen by the team", detail: `${t.name} (${t.riskLevel})` });
       toast.success(`“${t.name}” chosen`, {
-        description: "Send it to Campaign Launch to carry the direction into channel drafts.",
         action: {
           label: "Add to brief",
           onClick: () => {
@@ -52,17 +51,7 @@ export function StudioView() {
 
   return (
     <div>
-      <PageHeader
-        eyebrow="Workflow · Creative Studio"
-        title={
-          <>
-            AI widens the options. <span className="text-muted italic">Your team makes the call.</span>
-          </>
-        }
-      >
-        Gather references, then let AI propose divergent territories — safe, stretch, and bold — built from your brand system. It’s a sparring partner for the
-        creative process, not a replacement for it.
-      </PageHeader>
+      <PageHeader title="Creative Studio" />
 
       <section className="mb-10 grid gap-6 lg:grid-cols-[1fr_1.4fr]">
         <Card className="p-5">
@@ -79,7 +68,7 @@ export function StudioView() {
           </div>
         </Card>
         <div>
-          <SectionTitle title="Reference board">Notes, links, and images your team collects. AI reads them as context.</SectionTitle>
+          <SectionTitle title="References" meta={references.length} />
           <ReferenceBoard />
         </div>
       </section>
@@ -90,12 +79,6 @@ export function StudioView() {
             <Skeleton key={i} className="h-[520px]" style={{ animationDelay: `${i * 100}ms` }} />
           ))}
         </div>
-      )}
-
-      {!loading && !studio && (
-        <Empty icon={<Sparkles className="size-5" />} title="No territories yet">
-          You’ll get three deliberately different directions with palettes, typography, imagery, and reference searches.
-        </Empty>
       )}
 
       {!loading && studio && (
@@ -116,20 +99,18 @@ export function StudioView() {
           <div className="grid gap-4 md:grid-cols-[1.4fr_1fr]">
             <Card className="p-5">
               <div className="mb-3 flex items-center gap-1.5 text-[13px] font-semibold">
-                <Lightbulb className="size-4 text-assist" /> Provocations for the team
+                <Lightbulb className="size-4 text-assist" /> Provocations
               </div>
               <ol className="space-y-2.5">
                 {studio.result.provocations.map((p, i) => (
                   <li key={p} className="flex gap-3 text-[13.5px] leading-relaxed text-ink-2">
-                    <span className="font-display text-[18px] leading-none text-faint">{i + 1}</span>
+                    <span className="w-3 shrink-0 text-[13px] font-semibold text-faint tabular-nums">{i + 1}</span>
                     {p}
                   </li>
                 ))}
               </ol>
             </Card>
-            <HumanGate className="self-start">
-              Territories are starting points. Nothing here is a final asset, and logo explorations never change the primary lockup without Brand Director approval.
-            </HumanGate>
+            <HumanGate className="self-start">Starting points, not final assets. Logo changes need Brand Director approval.</HumanGate>
           </div>
         </div>
       )}
@@ -172,7 +153,7 @@ function TerritoryCard({ t, index, chosen, dimmed, onChoose }: { t: Territory; i
           <Badge tone={riskTone[t.riskLevel]}>{t.riskLevel}</Badge>
           <span className="text-[11px] text-faint">{t.brandFit}</span>
         </div>
-        <h3 className="font-display text-[28px] leading-tight">{t.name}</h3>
+        <h3 className="font-display text-[20px] leading-tight">{t.name}</h3>
         <p className="mt-2 text-[13.5px] leading-relaxed text-ink-2">{t.idea}</p>
         <p className="mt-2 text-[12.5px] leading-relaxed text-muted">{t.why}</p>
 
@@ -207,7 +188,7 @@ function TerritoryCard({ t, index, chosen, dimmed, onChoose }: { t: Territory; i
         </dl>
 
         <Button className="mt-5 w-full" variant={chosen ? "primary" : "secondary"} onClick={onChoose} icon={chosen ? <Check className="size-3.5" /> : undefined}>
-          {chosen ? "Chosen by the team" : "Choose this direction"}
+          {chosen ? "Chosen" : "Choose"}
         </Button>
       </div>
     </div>

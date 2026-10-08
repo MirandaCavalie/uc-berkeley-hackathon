@@ -15,17 +15,7 @@ export function BrandView() {
 
   return (
     <div>
-      <PageHeader
-        eyebrow="Foundation · Brand Kit"
-        title={
-          <>
-            Your brand book, <span className="text-muted italic">as rules AI can follow.</span>
-          </>
-        }
-      >
-        References, colors, voice, and claims live in one place. Every workflow reads this kit, and the brand checker enforces it deterministically — no prompt
-        can talk its way around a banned word.
-      </PageHeader>
+      <PageHeader title="Brand Kit" />
 
       <div className="grid items-start gap-8 lg:grid-cols-[1.3fr_1fr]">
         <div className="space-y-8">
@@ -61,7 +51,7 @@ export function BrandView() {
           </Card>
 
           <Card className="p-5">
-            <SectionTitle title="Palette">Used for previews, territory palettes, and off-palette checks.</SectionTitle>
+            <SectionTitle title="Palette" />
             <div className="space-y-2">
               {brand.colors.map((c, i) => (
                 <div key={i} className="grid grid-cols-[44px_110px_1fr_92px_28px] items-center gap-2">
@@ -98,7 +88,7 @@ export function BrandView() {
           </Card>
 
           <Card className="p-5">
-            <SectionTitle title="Rules">The checker blocks banned words and unapproved claims, and warns on voice and spec issues.</SectionTitle>
+            <SectionTitle title="Rules" />
             <div className="space-y-6">
               <ChipEditor label="Banned words" values={brand.bannedWords} onChange={(bannedWords) => setBrand({ bannedWords })} />
               <div>
@@ -168,7 +158,7 @@ function BrandPreview() {
         <div className="mb-8 flex items-center justify-between">
           {brand.logoDataUrl ? <img src={brand.logoDataUrl} alt="" className="h-6 w-auto" /> : <span className="text-[12px] font-bold tracking-[0.18em] uppercase" style={{ color: ink }}>{brand.name}</span>}
         </div>
-        <div className="font-display text-[34px] leading-[1.05]" style={{ color: ink }}>
+        <div className="font-display text-[28px] leading-[1.1]" style={{ color: ink }}>
           {brand.tagline}
         </div>
         <p className="mt-3 max-w-xs text-[12.5px] leading-relaxed opacity-80" style={{ color: brand.colors[3]?.hex ?? ink }}>

@@ -26,10 +26,7 @@ export function EvidencePanel() {
 
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between">
-        <div className="text-[13px] text-muted">
-          {evidence.length} file{evidence.length === 1 ? "" : "s"} · {new Set(evidence.map((e) => e.source)).size} sources
-        </div>
+      <div className="-mt-10 mb-3 flex justify-end">
         <Button size="sm" variant="secondary" icon={<Plus className="size-3.5" />} onClick={() => setOpen(true)}>
           Add evidence
         </Button>
@@ -123,7 +120,7 @@ function AddEvidenceModal({ open, onOpenChange }: { open: boolean; onOpenChange:
         if (!o) reset();
       }}
       title="Add evidence"
-      description="Paste real work artifacts. Radar cites them in every finding."
+      description=""
       footer={
         <>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>

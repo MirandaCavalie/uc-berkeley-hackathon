@@ -53,12 +53,7 @@ export function ReviewView() {
   return (
     <div>
       <PageHeader
-        eyebrow="Workflow · Review Loop"
-        title={
-          <>
-            Scattered feedback in. <span className="text-muted italic">One clear decision out.</span>
-          </>
-        }
+        title="Review Loop"
         actions={
           review && !editing ? (
             <Button variant="secondary" icon={<Pencil className="size-3.5" />} onClick={() => setEditing(true)}>
@@ -66,10 +61,7 @@ export function ReviewView() {
             </Button>
           ) : null
         }
-      >
-        Paste comments from Slack, email, and Figma. AI clusters them, flags duplicates and contradictions — including conflicts with your brand book — and drafts a
-        revision brief. Your team approves every interpretation and makes every call.
-      </PageHeader>
+      />
 
       {showInput && (
         <Card className="enter mb-10 p-5">
@@ -77,7 +69,7 @@ export function ReviewView() {
             <Field label="Asset under review">
               <Input value={draft.assetName} onChange={(e) => setDraft("review", { assetName: e.target.value })} placeholder="Spring hero v2" />
             </Field>
-            <Field label="Feedback" hint="Paste from any channel — mixed formats are fine">
+            <Field label="Feedback" hint="Slack, email, Figma">
               <Textarea
                 value={draft.feedback}
                 onChange={(e) => setDraft("review", { feedback: e.target.value })}
@@ -141,7 +133,7 @@ function ReviewResults({ review, brand }: { review: ReviewState; brand: BrandKit
       title: "Revision brief approved",
       detail: `${r.comments.length} comments → ${r.clusters.filter((c) => review.decisions[c.id] === "approved").length} approved changes · ${resolved}/${r.conflicts.length} conflicts decided · ${formatDuration(elapsed)} to brief`,
     });
-    toast.success("Revision brief approved", { description: "Copied to clipboard as Markdown — paste it into Slack, Asana, or Figma." });
+    toast.success("Revision brief approved", { description: "Copied as Markdown" });
   }
 
   return (
@@ -162,9 +154,9 @@ function ReviewResults({ review, brand }: { review: ReviewState; brand: BrandKit
       <section className="enter" style={{ "--i": 1 } as React.CSSProperties}>
         <div className="relative overflow-hidden rounded-2xl bg-ink p-6 text-white md:p-8">
           <div className="mb-3 flex items-center gap-2 text-[12px] font-medium tracking-wide text-white/60 uppercase">
-            <Scale className="size-3.5" /> The decision blocking approval
+            <Scale className="size-3.5" /> Blocking decision
           </div>
-          <div className="font-display max-w-3xl text-[30px] leading-[1.15] md:text-[34px]">{r.blockingDecision.question}</div>
+          <div className="font-display max-w-3xl text-[26px] leading-[1.2]">{r.blockingDecision.question}</div>
           <p className="mt-3 max-w-3xl text-[14px] leading-relaxed text-white/70">{r.blockingDecision.why}</p>
           <div className="mt-4 inline-flex items-center gap-2 rounded-lg bg-white/10 px-3 py-1.5 text-[13px]">
             Decision owner: <span className="font-medium">{r.blockingDecision.owner}</span>
@@ -176,9 +168,7 @@ function ReviewResults({ review, brand }: { review: ReviewState; brand: BrandKit
         <div className="space-y-10">
           {r.conflicts.length > 0 && (
             <section>
-              <SectionTitle eyebrow={`${resolved}/${r.conflicts.length} decided`} title="Conflicts to resolve">
-                AI never picks a side. Choose a direction or escalate to the named owner.
-              </SectionTitle>
+              <SectionTitle title="Conflicts" meta={`${resolved}/${r.conflicts.length} decided`} />
               <div className="space-y-3">
                 {r.conflicts.map((c, i) => (
                   <ConflictCard
@@ -196,9 +186,7 @@ function ReviewResults({ review, brand }: { review: ReviewState; brand: BrandKit
           )}
 
           <section>
-            <SectionTitle eyebrow={`${decided}/${r.clusters.length} reviewed`} title="Themes & proposed changes">
-              Approve the AI’s interpretation before it goes into the brief.
-            </SectionTitle>
+            <SectionTitle title="Themes" meta={`${decided}/${r.clusters.length} reviewed`} />
             <div className="space-y-2.5">
               {r.clusters.map((cl, i) => {
                 const d = review.decisions[cl.id] ?? "pending";
@@ -212,7 +200,7 @@ function ReviewResults({ review, brand }: { review: ReviewState; brand: BrandKit
                           <span className="text-[13.5px] font-semibold capitalize">{cl.topic}</span>
                           <span className="text-[12px] text-muted">{cl.summary}</span>
                         </div>
-                        <p className={clsx("text-[13.5px] leading-relaxed", conflicted ? "text-muted italic" : "text-ink-2")}>{cl.action}</p>
+                        <p className={clsx("text-[13.5px] leading-relaxed", conflicted ? "text-muted" : "text-ink-2")}>{cl.action}</p>
                         <div className="mt-2 flex flex-wrap gap-1">
                           {cl.commentIds.map((id) => {
                             const c = byId.get(id);
@@ -242,7 +230,7 @@ function ReviewResults({ review, brand }: { review: ReviewState; brand: BrandKit
           </section>
 
           <section>
-            <SectionTitle title="Every comment, attributed" />
+            <SectionTitle title="Comments" meta={r.comments.length} />
             <Card className="divide-y divide-line">
               {r.comments.map((c) => (
                 <div key={c.id} className={clsx("flex gap-3 px-4 py-2.5", dupIds.has(c.id) && "bg-sunken/50")}>
@@ -272,14 +260,14 @@ function ReviewResults({ review, brand }: { review: ReviewState; brand: BrandKit
             </div>
             <div className="space-y-1.5 text-[12.5px] text-ink-2">
               <div className="flex justify-between gap-2">
-                <span className="text-muted">Baseline consolidation</span>
+                <span className="text-muted">Baseline</span>
                 <span className="font-medium tabular-nums">{baseline ? `${baseline.days} days` : "Not in evidence"}</span>
               </div>
               <div className="flex justify-between gap-2">
-                <span className="text-muted">This round, analysis → approval</span>
+                <span className="text-muted">This round</span>
                 <span className="font-medium tabular-nums">{review.approvedAt ? formatDuration(Date.parse(review.approvedAt) - Date.parse(review.createdAt)) : "In progress"}</span>
               </div>
-              {baseline && <p className="pt-1 text-[11.5px] leading-relaxed text-faint">Baseline: {baseline.note}. Measured from your own timeline — not an estimate.</p>}
+              {baseline && <p className="pt-1 text-[11.5px] text-faint">Source: approval timeline</p>}
             </div>
           </Card>
         </aside>
@@ -364,14 +352,14 @@ function BriefPreview({ review, markdown, onApprove }: { review: ReviewState; ma
   return (
     <Card className="overflow-hidden">
       <div className="border-b border-line bg-sunken/50 px-4 py-3">
-        <div className="text-[11.5px] font-medium tracking-wide text-muted uppercase">Live revision brief</div>
+        <div className="text-[11.5px] font-medium tracking-wide text-muted uppercase">Revision brief</div>
         <div className="mt-0.5 text-[14px] font-semibold">{r.revisionBrief.title}</div>
       </div>
       <div className="max-h-[52vh] space-y-4 overflow-y-auto px-4 py-4 text-[12.5px] leading-relaxed scrollbar-thin">
         <p className="text-ink-2">{r.revisionBrief.objective}</p>
         <div>
           <div className="mb-1.5 font-medium">Changes ({approved.length})</div>
-          {approved.length === 0 && <p className="text-faint">Approve themes on the left to add them here.</p>}
+          {approved.length === 0 && <p className="text-faint">No approved changes yet</p>}
           <ol className="list-decimal space-y-1.5 pl-4 text-ink-2">
             {approved.map((c) => (
               <li key={c.id}>{c.action}</li>
@@ -415,7 +403,7 @@ function BriefPreview({ review, markdown, onApprove }: { review: ReviewState; ma
             <Check className="size-3.5" /> Approved — sent to designer
           </div>
         ) : (
-          <HumanGate>Nothing reaches the designer until a person approves this brief.</HumanGate>
+          <HumanGate>Needs approval before it reaches the designer.</HumanGate>
         )}
         <div className="flex gap-2">
           <Button className="flex-1" variant="primary" disabled={approved.length === 0} onClick={onApprove} icon={<ClipboardCopy className="size-3.5" />}>

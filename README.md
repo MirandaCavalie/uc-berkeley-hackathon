@@ -12,6 +12,7 @@ Built for the [Innovation Intelligence Hackathon](docs/HACKATHON.md) at UC Berke
 
 | Area | What it does |
 | --- | --- |
+| **Workflow Learning** (discover) | Shows how the platform learns a manual workflow: connect sources → extract events (who, what, when, which stage) → reconstruct the real path with loops, handoffs, and manual work → the team confirms each step → measure the pilot. Includes 7 mapped real-world cases (creative review, channel adaptation, pharma MLR review, localization, performance reporting, request intake, creator content), each step tagged with the signal it is learned from. |
 | **Radar** (discover) | Maps the workflow from evidence, splits hours into automate / AI-assisted / keep creative, and ranks opportunities on 7 transparent dimensions. Every claim links to a verbatim quote from the source. |
 | **Review Loop** (pilot #1) | Turns scattered feedback from Slack, email, and Figma into themes, duplicates, contradictions (including conflicts with the brand book), one blocking decision with a named owner, and a revision brief that only fills with human-approved changes. |
 | **Campaign Launch** | Adapts an approved brief into every channel spec (Instagram, TikTok, Meta, display, email, search, web, retail, LinkedIn) with character limits and a live, deterministic brand check. A person approves each asset; nothing auto-publishes. |
