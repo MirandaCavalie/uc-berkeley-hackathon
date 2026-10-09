@@ -32,7 +32,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const workspace = useStore((s) => s.workspace);
   const resetDemo = useStore((s) => s.resetDemo);
-  const [engine, setEngine] = useState<{ llm: boolean; label: string } | null>(null);
+  const [engine, setEngine] = useState<{ llm: boolean; label: string; jev?: boolean } | null>(null);
 
   useEffect(() => {
     useStore.persist.rehydrate();
@@ -92,9 +92,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="truncate text-[11.5px] text-muted">{workspace.teamSize || workspace.industry || "Workspace"}</div>
           </div>
           <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-1.5 text-[11.5px] text-muted" title={engine?.label}>
-              <span className={clsx("size-1.5 rounded-full", engine?.llm ? "bg-good" : engine ? "bg-assist" : "bg-faint")} />
-              <span className="max-w-[140px] truncate">{engine ? engine.label : "Checking engine…"}</span>
+            <div
+              className="flex items-center gap-1.5 text-[11.5px] text-muted"
+              title={engine ? `${engine.label}${engine.jev ? " · classification and scoring decided by Jev" : ""}` : undefined}
+            >
+              <span className={clsx("size-1.5 rounded-full", engine?.llm || engine?.jev ? "bg-good" : engine ? "bg-assist" : "bg-faint")} />
+              <span className="max-w-[160px] truncate">{engine ? `${engine.label}${engine.jev ? " + Jev" : ""}` : "Checking engine…"}</span>
             </div>
             <button
               type="button"

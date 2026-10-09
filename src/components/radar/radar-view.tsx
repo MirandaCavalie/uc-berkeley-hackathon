@@ -63,21 +63,26 @@ export function RadarView() {
               <p className="mb-5 max-w-3xl text-[15px] leading-relaxed text-ink">{radar.result.summary}</p>
               <SplitBar steps={applyStepReviews(radar.result.steps, stepReviews)} />
               <div className="mt-5 border-t border-line pt-4">
-                <EngineStamp engine={radar.engine} createdAt={radar.createdAt} warning={stale ? "Evidence changed since this analysis. Re-run Radar to update." : radar.warning} />
+                <EngineStamp
+                  engine={radar.engine}
+                  createdAt={radar.createdAt}
+                  judgments={radar.judgments}
+                  warning={stale ? "Evidence changed since this analysis. Re-run Radar to update." : radar.warning}
+                />
               </div>
             </Card>
           </section>
 
           <section>
             <SectionTitle title="Workflow" meta={`${radar.result.steps.length} steps`} />
-            <ProcessMap steps={radar.result.steps} highlight={pilot?.stepIds ?? []} />
+            <ProcessMap steps={radar.result.steps} highlight={pilot?.stepIds ?? []} judgments={radar.judgments?.items} />
           </section>
 
           <section>
             <SectionTitle title="Opportunities" meta={ranked.length} />
             <div className="space-y-3">
               {ranked.map((o, i) => (
-                <OpportunityCard key={o.id} opp={o} rank={i + 1} index={i} recommended={o.id === pilot?.id} />
+                <OpportunityCard key={o.id} opp={o} rank={i + 1} index={i} recommended={o.id === pilot?.id} judgments={radar.judgments?.items} />
               ))}
             </div>
           </section>

@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { Check, ClipboardCopy, Copy, GitMerge, Pencil, Scale, Timer, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { EngineStamp, HumanGate, useTask } from "@/components/shared";
+import { Confidence, EngineStamp, HumanGate, useTask } from "@/components/shared";
 import { Badge, Button, Card, Field, Input, PageHeader, SectionTitle, Skeleton, Stat, Textarea } from "@/components/ui";
 import { formatDuration, stageBaseline } from "@/lib/baseline";
 import type { ReviewComment, ReviewResult } from "@/lib/schemas";
@@ -147,7 +147,7 @@ function ReviewResults({ review, brand }: { review: ReviewState; brand: BrandKit
           <Stat label="Duplicates" value={r.duplicates.length} sub="counted once" />
         </div>
         <div className="mt-5 border-t border-line pt-4">
-          <EngineStamp engine={review.engine} createdAt={review.createdAt} warning={review.warning} />
+          <EngineStamp engine={review.engine} createdAt={review.createdAt} warning={review.warning} judgments={review.judgments} />
         </div>
       </Card>
 
@@ -241,9 +241,12 @@ function ReviewResults({ review, brand }: { review: ReviewState; brand: BrandKit
                   <div className="min-w-0 flex-1 text-[13px] leading-relaxed text-ink-2">{c.text}</div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
                     <span className="text-[11px] text-muted">{c.source}</span>
-                    <span className="rounded bg-sunken px-1.5 text-[10.5px] text-muted capitalize">
-                      {c.topic}
-                      {dupIds.has(c.id) ? " · dup" : ""}
+                    <span className="flex items-center gap-1">
+                      {review.judgments?.items[`topic:${c.text}`] && <Confidence judgment={review.judgments.items[`topic:${c.text}`]} />}
+                      <span className="rounded bg-sunken px-1.5 text-[10.5px] text-muted capitalize">
+                        {c.topic} · {c.direction}
+                        {dupIds.has(c.id) ? " · dup" : ""}
+                      </span>
                     </span>
                   </div>
                 </div>

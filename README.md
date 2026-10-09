@@ -50,8 +50,23 @@ cp .env.example .env.local
 | `ANTHROPIC_API_KEY` | — | Uses `claude-sonnet-5-5` unless `AI_MODEL` is set. |
 | `AI_PROVIDER` | auto | `openai` or `anthropic` when both keys are present. |
 | `AI_MODEL` | per provider | Any model id the provider supports. |
+| `JEV_API_KEY` | — | Enables the Jev decision layer (below). |
+| `JEV_MODEL` | `jev-latest` | Jev model id. |
 
 The sidebar shows which engine is active. If an LLM call fails, the route falls back to the local engine and the result is stamped with a warning. Add `?engine=local` to any `/api/ai/*` call to force the local engine.
+
+### Decision layer (Jev)
+
+With `JEV_API_KEY` set, the classification and scoring judgments go to [Jev](https://typesafe.ai), a structured decision model that returns calibrated probabilities instead of free text (`src/lib/ai/decisions.ts`):
+
+| Decision | Question type | Applied when |
+| --- | --- | --- |
+| Radar step mode (automate / assist / human) | choice | confidence ≥ 0.55 |
+| Opportunity AI fit, data readiness, risk, effort, measurement | 5-level score | confidence ≥ 0.45 |
+| Review comment topic and direction | choice | confidence ≥ 0.5 |
+| Workflow Learning stage of free-text events | choice | confidence ≥ 0.5 |
+
+Counts, hours, impact, and frequency stay in code. Below the threshold, the rule-based label is kept and the item is flagged for a team check; the UI shows each decision's confidence and probabilities. If Jev fails, everything falls back to the rules with a warning. Add `?decisions=rules` to an `/api/ai/*` call to skip Jev.
 
 ## Architecture
 

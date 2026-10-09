@@ -64,11 +64,28 @@ export interface Workspace {
 
 export type AnalysisEngine = { kind: "llm" | "local"; label: string };
 
+export interface Judgment {
+  label: string;
+  confidence: number;
+  probabilities: Record<string, number>;
+  rule: string;
+  applied: boolean;
+}
+
+export interface JudgmentReport {
+  model: string;
+  latencyMs: number;
+  questions: number;
+  inputTokens: number;
+  items: Record<string, Judgment>;
+}
+
 export interface Stamped<T> {
   result: T;
   engine: AnalysisEngine;
   createdAt: string;
   warning: string | null;
+  judgments?: JudgmentReport | null;
 }
 
 export interface ReviewInput {

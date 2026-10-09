@@ -14,7 +14,7 @@ const topicRules: [FeedbackTopic, RegExp][] = [
   ["copy", /\b(copy|subhead|wording|subject line|caption|text)\b/i],
 ];
 
-type Direction =
+export type Direction =
   | "bigger"
   | "smaller"
   | "keep"
@@ -67,8 +67,10 @@ const directionLabel: Record<Direction, string> = {
 
 const seniority = [/\b(cmo|chief|vp|head of)\b/i, /\b(director|counsel|legal)\b/i, /\blead\b/i, /\bmanager\b/i];
 
-export function runReview(input: ReviewInput, brand: BrandKit): ReviewResult {
-  const comments = parseComments(input.feedback);
+export type CommentLabels = (text: string) => { topic?: FeedbackTopic; direction?: Direction } | undefined;
+
+export function runReview(input: ReviewInput, brand: BrandKit, labelFor?: CommentLabels): ReviewResult {
+  const comments = parseComments(input.feedback, labelFor);
 
   const guidelineComments: ReviewComment[] = brand.guidelines.map((g, i) => ({
     id: `brand-${i + 1}`,
@@ -76,8 +78,8 @@ export function runReview(input: ReviewInput, brand: BrandKit): ReviewResult {
     role: "Guideline",
     source: "Brand kit",
     text: g,
-    topic: topicOf(g),
-    direction: directionOf(g),
+    topic: labelFor?.(g)?.topic ?? topicOf(g),
+    direction: labelFor?.(g)?.direction ?? directionOf(g),
   }));
 
   const byTopic = new Map<FeedbackTopic, ReviewComment[]>();
@@ -177,7 +179,7 @@ export function runReview(input: ReviewInput, brand: BrandKit): ReviewResult {
   };
 }
 
-function parseComments(feedback: string): ReviewComment[] {
+export function parseComments(feedback: string, labelFor?: CommentLabels): ReviewComment[] {
   const out: ReviewComment[] = [];
   let source = "Pasted";
   let emailAuthor: { author: string; role: string } | null = null;
@@ -200,46 +202,47 @@ function parseComments(feedback: string): ReviewComment[] {
     const attributed = raw.match(/^(?:\[[^\]]+\]\s*)?[-*•]?\s*([A-Z][\w.'-]+(?:\s[A-Z][\w.'-]+){0,2})\s*\(([^)]+)\):\s*(.+)$/);
     if (attributed) {
       emailAuthor = null;
-      out.push(makeComment(out.length, attributed[1], attributed[2], source, attributed[3]));
+      out.push(makeComment(out.length, attributed[1], attributed[2], source, attributed[3], labelFor));
       continue;
     }
 
     const simple = raw.match(/^(?:\[[^\]]+\]\s*)?[-*•]?\s*([A-Z][\w.'-]+(?:\s[A-Z][\w.'-]+)?):\s*(.{12,})$/);
     if (simple && !/^(subject|re|to|cc)$/i.test(simple[1])) {
-      out.push(makeComment(out.length, simple[1], "Reviewer", source, simple[2]));
+      out.push(makeComment(out.length, simple[1], "Reviewer", source, simple[2], labelFor));
       continue;
     }
 
     const item = raw.match(/^\d+[.)]\s*(.+)$/);
     if (item && emailAuthor) {
-      out.push(makeComment(out.length, emailAuthor.author, emailAuthor.role, source, item[1]));
+      out.push(makeComment(out.length, emailAuthor.author, emailAuthor.role, source, item[1], labelFor));
       continue;
     }
 
     if (raw.length > 24 && !/^(team|thanks|happy to|subject)/i.test(raw) && !emailAuthor) {
-      out.push(makeComment(out.length, "Unattributed", "Reviewer", source, raw.replace(/^[-*•]\s*/, "")));
+      out.push(makeComment(out.length, "Unattributed", "Reviewer", source, raw.replace(/^[-*•]\s*/, ""), labelFor));
     }
   }
   return out;
 }
 
-function makeComment(i: number, author: string, role: string, source: string, text: string): ReviewComment {
+function makeComment(i: number, author: string, role: string, source: string, text: string, labelFor?: CommentLabels): ReviewComment {
+  const labels = labelFor?.(text.trim());
   return {
     id: `c${i + 1}`,
     author: author.trim(),
     role: role.trim(),
     source,
     text: text.trim(),
-    topic: topicOf(text),
-    direction: directionOf(text),
+    topic: labels?.topic ?? topicOf(text),
+    direction: labels?.direction ?? directionOf(text),
   };
 }
 
-function topicOf(text: string): FeedbackTopic {
+export function topicOf(text: string): FeedbackTopic {
   return topicRules.find(([, re]) => re.test(text))?.[0] ?? "other";
 }
 
-function directionOf(text: string): Direction {
+export function directionOf(text: string): Direction {
   return directionRules.find(([, re]) => re.test(text))?.[0] ?? "change";
 }
 

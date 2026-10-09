@@ -40,6 +40,24 @@ export interface LearnedPath {
   sources: number;
 }
 
+export const stageOptions: { name: string; description: string }[] = [
+  { name: "Brief intake", description: "Writing or receiving the campaign brief" },
+  { name: "Brief clarification", description: "Questions back and forth about what the brief means" },
+  { name: "Moodboard & references", description: "Collecting references, inspiration, or past campaigns" },
+  { name: "Concept development", description: "Creating creative routes and concepts" },
+  { name: "Creative review", description: "Stakeholders giving feedback on a creative draft (headline, logo, color, imagery)" },
+  { name: "Feedback consolidation", description: "Merging feedback from several people into one list" },
+  { name: "Revision", description: "Designers producing a new version" },
+  { name: "Legal review", description: "Checking claims, substantiation, and regulated wording" },
+  { name: "Final approval", description: "Sign-off to ship" },
+  { name: "Channel adaptation", description: "Resizing, re-cropping, or reformatting assets for each channel" },
+  { name: "Copywriting", description: "Writing headlines, variants, or body copy" },
+  { name: "Localization", description: "Translating or adapting for another market or language" },
+  { name: "Asset handoff", description: "Exporting, naming, uploading to the DAM or ad platforms" },
+  { name: "Reporting", description: "Performance results, metrics, recaps" },
+  { name: "Requests", description: "Anything else" },
+];
+
 const MANUAL = /\bby hand\b|\bmanual(ly)?\b|\breconcil|\bre-?export|\bpulled\b|\bre-?copied\b|\bnaming fixes\b/i;
 
 const requestStages: [RegExp, string][] = [

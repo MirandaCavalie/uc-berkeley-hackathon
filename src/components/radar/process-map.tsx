@@ -8,6 +8,7 @@ import { ModeBadge } from "@/components/ui";
 import type { ProcessStep, WorkMode } from "@/lib/schemas";
 import { modeMeta, stepKey } from "@/lib/scoring";
 import { useStore } from "@/lib/store";
+import type { Judgment } from "@/lib/types";
 
 const ring: Record<WorkMode, string> = {
   automate: "before:bg-automate",
@@ -19,7 +20,15 @@ const bar: Record<WorkMode, string> = { automate: "bg-automate", assist: "bg-ass
 
 const modes: WorkMode[] = ["automate", "assist", "human"];
 
-export function ProcessMap({ steps, highlight = [] }: { steps: ProcessStep[]; highlight?: string[] }) {
+export function ProcessMap({
+  steps,
+  highlight = [],
+  judgments,
+}: {
+  steps: ProcessStep[];
+  highlight?: string[];
+  judgments?: Record<string, Judgment>;
+}) {
   const reviews = useStore((s) => s.stepReviews);
   const reviewStep = useStore((s) => s.reviewStep);
   const clearStepReview = useStore((s) => s.clearStepReview);
@@ -43,6 +52,7 @@ export function ProcessMap({ steps, highlight = [] }: { steps: ProcessStep[]; hi
           {steps.map((s, i) => {
             const review = reviews[stepKey(s)];
             const mode = review?.mode ?? s.mode;
+            const unsure = !review && judgments?.[`step:${s.id}`]?.applied === false;
             return (
               <li key={s.id} className="flex items-center">
                 <button
@@ -60,7 +70,11 @@ export function ProcessMap({ steps, highlight = [] }: { steps: ProcessStep[]; hi
                       {i + 1}
                       {review && <Check className="size-3 text-good" />}
                     </span>
-                    {highlight.includes(s.id) && <span className="rounded bg-accent-soft px-1 text-[10.5px] font-medium text-accent">Pilot</span>}
+                    {highlight.includes(s.id) ? (
+                      <span className="rounded bg-accent-soft px-1 text-[10.5px] font-medium text-accent">Pilot</span>
+                    ) : (
+                      unsure && <span className="rounded bg-warn-soft px-1 text-[10.5px] font-medium text-warn">Check</span>
+                    )}
                   </div>
                   <div className="line-clamp-2 min-h-[36px] text-[13px] leading-snug font-medium">{s.name}</div>
                   <div className="mt-2 text-[11.5px] text-muted">{s.owner}</div>
@@ -83,6 +97,7 @@ export function ProcessMap({ steps, highlight = [] }: { steps: ProcessStep[]; hi
           key={step.id}
           step={step}
           review={reviews[stepKey(step)]}
+          judgment={judgments?.[`step:${step.id}`]}
           onReview={(m) => reviewStep(stepKey(step), m)}
           onUndo={() => clearStepReview(stepKey(step))}
         />
@@ -94,11 +109,13 @@ export function ProcessMap({ steps, highlight = [] }: { steps: ProcessStep[]; hi
 function StepDetail({
   step,
   review,
+  judgment,
   onReview,
   onUndo,
 }: {
   step: ProcessStep;
   review: { mode: WorkMode } | undefined;
+  judgment: Judgment | undefined;
   onReview: (m: WorkMode) => void;
   onUndo: () => void;
 }) {
@@ -140,6 +157,8 @@ function StepDetail({
               <button type="button" onClick={onUndo} className="inline-flex items-center gap-1 text-muted hover:text-ink">
                 <Undo2 className="size-3" /> Undo
               </button>
+            ) : judgment && !judgment.applied ? (
+              <span className="text-warn">Jev unsure, needs a team check</span>
             ) : (
               <span className="text-faint">Not confirmed</span>
             )}
@@ -158,9 +177,23 @@ function StepDetail({
                 <span className={clsx("size-1.5 rounded-full", bar[m])} />
                 {modeMeta[m].label}
                 {!review && step.mode === m && <span className="text-[10.5px] text-faint">AI</span>}
+                {judgment && (
+                  <span className={clsx("text-[10.5px] tabular-nums", review && mode === m ? "text-white/70" : "text-faint")}>
+                    {Math.round((judgment.probabilities[m] ?? 0) * 100)}%
+                  </span>
+                )}
               </button>
             ))}
           </div>
+          {judgment && !review && (
+            <div className="mt-2 text-[11.5px] text-muted">
+              Jev: {modeMeta[judgment.label as WorkMode]?.label ?? judgment.label} at {Math.round(judgment.confidence * 100)}% confidence
+              {judgment.applied
+                ? judgment.rule !== judgment.label && `, overriding the rule (${modeMeta[judgment.rule as WorkMode]?.label ?? judgment.rule})`
+                : `, so the rule result (${modeMeta[judgment.rule as WorkMode]?.label ?? judgment.rule}) stays`}
+              .
+            </div>
+          )}
           {review && review.mode !== step.mode && (
             <div className="mt-2 text-[11.5px] text-muted">
               Changed from {modeMeta[step.mode].label}. Applied on every run.

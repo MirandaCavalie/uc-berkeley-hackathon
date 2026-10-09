@@ -3,7 +3,8 @@
 import clsx from "clsx";
 import { ArrowRight, ChevronRight, Radar, RotateCw } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Confidence } from "@/components/shared";
 import { Badge, Card, ModeBadge, PageHeader, SectionTitle } from "@/components/ui";
 import { stageBaseline } from "@/lib/baseline";
 import { workflowCases, type WorkflowCase } from "@/lib/cases";
@@ -11,6 +12,7 @@ import { extractEvents, reconstructPath, type EventAction, type LearnedPath, typ
 import type { WorkMode } from "@/lib/schemas";
 import { stepKey } from "@/lib/scoring";
 import { useStore } from "@/lib/store";
+import type { Judgment, JudgmentReport } from "@/lib/types";
 
 const actionLabel: Record<EventAction, string> = {
   brief: "Brief",
@@ -28,7 +30,12 @@ export function LearnView() {
   const radar = useStore((s) => s.radar);
   const stepReviews = useStore((s) => s.stepReviews);
 
-  const events = useMemo(() => extractEvents(evidence), [evidence]);
+  const extracted = useMemo(() => extractEvents(evidence), [evidence]);
+  const judged = useStageJudgments(extracted);
+  const events = useMemo(
+    () => (judged ? extracted.map((e) => (judged.items[e.id]?.applied ? { ...e, stage: judged.items[e.id].label } : e)) : extracted),
+    [extracted, judged],
+  );
   const path = useMemo(() => reconstructPath(events), [events]);
   const baseline = stageBaseline(evidence, /consolidat/i);
   const confirmed = radar ? radar.result.steps.filter((s) => stepReviews[stepKey(s)]).length : 0;
@@ -36,7 +43,11 @@ export function LearnView() {
 
   const pipeline = [
     { name: "Connect", value: `${path.sources} sources`, detail: [...new Set(evidence.map((e) => e.source))].join(", ") || "No evidence yet" },
-    { name: "Extract", value: `${events.length} events`, detail: "Who, what, when, which stage" },
+    {
+      name: "Extract",
+      value: `${events.length} events`,
+      detail: judged ? `Stages of ${Object.keys(judged.items).length} free-text events decided by Jev` : "Who, what, when, which stage",
+    },
     {
       name: "Reconstruct",
       value: `${timelineStages.length} stages`,
@@ -93,7 +104,7 @@ export function LearnView() {
       </section>
 
       <section className="mb-12 grid items-start gap-6 lg:grid-cols-[1.35fr_1fr]">
-        <EventLog events={events} />
+        <EventLog events={events} judgments={judged?.items} />
         <PathCard path={path} events={events} />
       </section>
 
@@ -102,7 +113,32 @@ export function LearnView() {
   );
 }
 
-function EventLog({ events }: { events: WorkEvent[] }) {
+function useStageJudgments(events: WorkEvent[]) {
+  const [report, setReport] = useState<{ key: string; value: JudgmentReport } | null>(null);
+  const freeText = useMemo(() => events.filter((e) => e.action === "comment" || e.action === "change-request" || e.action === "request"), [events]);
+  const key = freeText.map((e) => e.id).join("|");
+
+  useEffect(() => {
+    if (!freeText.length) return;
+    const controller = new AbortController();
+    fetch("/api/decide/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        events: freeText.map(({ id, actor, role, action, source, detail, stage }) => ({ id, actor, role, action, source, detail: detail.slice(0, 2_000), stage })),
+      }),
+      signal: controller.signal,
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((value: JudgmentReport | null) => value && setReport({ key, value }))
+      .catch(() => {});
+    return () => controller.abort();
+  }, [key, freeText]);
+
+  return report?.key === key ? report.value : null;
+}
+
+function EventLog({ events, judgments }: { events: WorkEvent[]; judgments?: Record<string, Judgment> }) {
   const sources = [...new Set(events.map((e) => e.source))];
   const [source, setSource] = useState<string | null>(null);
   const shown = source ? events.filter((e) => e.source === source) : events;
@@ -137,6 +173,7 @@ function EventLog({ events }: { events: WorkEvent[] }) {
                 <span className="rounded bg-sunken px-1.5 text-[10.5px] text-muted">{actionLabel[e.action]}</span>
                 <ArrowRight className="size-3 text-faint" />
                 <span className="text-[11.5px] font-medium text-accent">{e.stage}</span>
+                {judgments?.[e.id] && <Confidence judgment={judgments[e.id]} />}
                 {e.round && <span className="text-[11px] text-faint">round {e.round}</span>}
               </div>
               <div className="mt-0.5 line-clamp-1 text-[12.5px] text-ink-2">{e.detail}</div>

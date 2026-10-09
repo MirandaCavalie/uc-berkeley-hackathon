@@ -1,13 +1,15 @@
 import { generateText, Output } from "ai";
 import { z } from "zod";
+import { judgeRadar, labelComments } from "@/lib/ai/decisions";
+import { jevEnabled } from "@/lib/ai/jev";
 import { resolveModel } from "@/lib/ai/provider";
 import { launchPrompt, radarPrompt, reviewPrompt, studioPrompt } from "@/lib/ai/prompts";
 import { runLaunch } from "@/lib/engine/launch";
 import { runRadar } from "@/lib/engine/radar";
 import { runReview } from "@/lib/engine/review";
 import { runStudio } from "@/lib/engine/studio";
-import { tasks, type TaskKey } from "@/lib/schemas";
-import type { AnalysisEngine, BrandKit, EvidenceItem, LaunchInput, Reference, ReviewInput, StudioInput } from "@/lib/types";
+import { tasks, type RadarResult, type TaskKey } from "@/lib/schemas";
+import type { AnalysisEngine, BrandKit, EvidenceItem, JudgmentReport, LaunchInput, Reference, ReviewInput, StudioInput } from "@/lib/types";
 
 export const maxDuration = 120;
 
@@ -108,8 +110,19 @@ export async function POST(request: Request, ctx: RouteContext<"/api/ai/[task]">
   }
   const body = parsed.data;
 
+  const params = new URL(request.url).searchParams;
   const resolved = resolveModel();
-  const forceLocal = new URL(request.url).searchParams.get("engine") === "local";
+  const forceLocal = params.get("engine") === "local";
+  const useJev = jevEnabled() && params.get("decisions") !== "rules";
+
+  let result: unknown;
+  let engine: AnalysisEngine = { kind: "local", label: "Local engine" };
+  let warning: string | null = null;
+  let judgments: JudgmentReport | null = null;
+  const jevFailed = (error: unknown) => {
+    console.error(`[jev:${task}]`, error);
+    warning = `Jev decisions unavailable (${message(error)}). Using rule-based labels.`;
+  };
 
   if (resolved && !forceLocal) {
     try {
@@ -122,19 +135,42 @@ export async function POST(request: Request, ctx: RouteContext<"/api/ai/[task]">
         output: Output.object({ schema }),
         maxRetries: 1,
       });
-      const engine: AnalysisEngine = { kind: "llm", label: resolved.label };
-      return Response.json({ result: output, engine, warning: null });
+      result = output;
+      engine = { kind: "llm", label: resolved.label };
     } catch (error) {
       console.error(`[ai:${task}]`, error);
-      const engine: AnalysisEngine = { kind: "local", label: "Local engine (fallback)" };
-      return Response.json({
-        result: runLocal(task, body),
-        engine,
-        warning: `${resolved.label} failed (${error instanceof Error ? error.message.slice(0, 140) : "unknown error"}). Showing the local engine's analysis instead.`,
-      });
+      engine = { kind: "local", label: "Local engine (fallback)" };
+      warning = `${resolved.label} failed (${message(error)}). Showing the local engine's analysis instead.`;
     }
   }
 
-  const engine: AnalysisEngine = { kind: "local", label: "Local engine" };
-  return Response.json({ result: runLocal(task, body), engine, warning: null });
+  if (result === undefined) {
+    if (task === "review" && useJev) {
+      const { input, brand } = body as { input: ReviewInput; brand: BrandKit };
+      try {
+        const labeled = await labelComments(input, brand);
+        judgments = labeled.judgments;
+        result = runReview(input, brand, labeled.labelFor);
+      } catch (error) {
+        jevFailed(error);
+      }
+    }
+    result ??= runLocal(task, body);
+  }
+
+  if (task === "radar" && useJev) {
+    try {
+      const judged = await judgeRadar(result as RadarResult);
+      result = judged.result;
+      judgments = judged.judgments;
+    } catch (error) {
+      jevFailed(error);
+    }
+  }
+
+  return Response.json({ result, engine, warning, judgments });
+}
+
+function message(error: unknown) {
+  return error instanceof Error ? error.message.slice(0, 140) : "unknown error";
 }

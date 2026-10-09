@@ -4,10 +4,11 @@ import clsx from "clsx";
 import { ArrowRight, ChevronDown, Ruler, Target, Waypoints } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { Quote } from "@/components/shared";
+import { Confidence, Quote } from "@/components/shared";
 import { Badge, ScoreRing } from "@/components/ui";
 import type { Opportunity } from "@/lib/schemas";
 import { compositeScore, dimensions } from "@/lib/scoring";
+import type { Judgment } from "@/lib/types";
 
 const workflowLink = {
   review: { href: "/review", label: "Open Review Loop" },
@@ -16,7 +17,19 @@ const workflowLink = {
   none: null,
 } as const;
 
-export function OpportunityCard({ opp, rank, recommended, index }: { opp: Opportunity; rank: number; recommended: boolean; index: number }) {
+export function OpportunityCard({
+  opp,
+  rank,
+  recommended,
+  index,
+  judgments,
+}: {
+  opp: Opportunity;
+  rank: number;
+  recommended: boolean;
+  index: number;
+  judgments?: Record<string, Judgment>;
+}) {
   const [open, setOpen] = useState(recommended);
   const score = compositeScore(opp.scores);
   const link = workflowLink[opp.workflow];
@@ -61,8 +74,9 @@ export function OpportunityCard({ opp, rank, recommended, index }: { opp: Opport
                 {dimensions.map((d, i) => {
                   const raw = opp.scores[d.key];
                   const good = d.inverted ? 6 - raw : raw;
+                  const judgment = judgments?.[`score:${opp.id}:${d.key}`];
                   return (
-                    <div key={d.key} className="grid grid-cols-[84px_1fr_68px] items-center gap-2" title={d.question}>
+                    <div key={d.key} className="grid grid-cols-[84px_1fr_68px_44px] items-center gap-2" title={d.question}>
                       <span className="text-[12px] text-ink-2">{d.label}</span>
                       <div className="flex gap-0.5">
                         {[1, 2, 3, 4, 5].map((n) => (
@@ -76,11 +90,17 @@ export function OpportunityCard({ opp, rank, recommended, index }: { opp: Opport
                       <span className="text-right text-[11px] whitespace-nowrap text-muted tabular-nums">
                         {raw}/5 · w{Math.round(d.weight * 100)}%
                       </span>
+                      <span className="text-right">
+                        {judgment ? <Confidence judgment={judgment} /> : <span className="text-[10.5px] text-faint">{judgments ? "counted" : ""}</span>}
+                      </span>
                     </div>
                   );
                 })}
               </div>
-              <p className="mt-2 text-[11.5px] leading-relaxed text-faint">Risk and effort count inversely. Score = weighted average scaled to 100.</p>
+              <p className="mt-2 text-[11.5px] leading-relaxed text-faint">
+                Risk and effort count inversely. Score = weighted average scaled to 100.
+                {judgments && " Judgment calls are scored by Jev; impact and frequency are counted from the evidence."}
+              </p>
             </div>
             <div className="space-y-2">
               <div className="text-[11.5px] font-medium tracking-wide text-muted uppercase">Evidence</div>
