@@ -110,6 +110,45 @@ export interface StepReview {
   confirmedAt: string;
 }
 
+export interface InterviewTask {
+  id: string;
+  name: string;
+  hoursPerWeek: number;
+  tools: string[];
+  stage: string;
+  mode: WorkMode;
+  pain: string;
+  judgment?: Judgment | null;
+}
+
+export interface InterviewMessage {
+  from: "ai" | "person";
+  text: string;
+}
+
+export interface Interview {
+  id: string;
+  name: string;
+  role: string;
+  team: string;
+  status: "invited" | "in-progress" | "completed";
+  invitedAt: string;
+  completedAt: string | null;
+  transcript: InterviewMessage[];
+  context: string;
+  tasks: InterviewTask[];
+  waits: string;
+  keepHuman: string;
+  satisfaction: number | null;
+}
+
+export interface RoiAssumptions {
+  hourlyCost: number;
+  capture: Record<WorkMode, number>;
+  toolCostPerMonth: number;
+  manualHoursPerInterview: number;
+}
+
 export interface PilotEvent {
   id: string;
   workflow: "radar" | "review" | "launch" | "studio";

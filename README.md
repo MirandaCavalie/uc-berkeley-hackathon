@@ -12,6 +12,7 @@ Built for the [Innovation Intelligence Hackathon](docs/HACKATHON.md) at UC Berke
 
 | Area | What it does |
 | --- | --- |
+| **Team Interviews** (discover) | Async AI interviews with everyone who touches campaign work. A short adaptive chat asks each person for their recurring tasks, hours, tools, what slows them down, where they wait on others, and what must stay human; it probes again when an answer has no usable number. Results roll up into prioritized findings by stage with hours/month mapped, recoverable hours, projected annual savings, first-month ROI, and satisfaction, all from editable assumptions. One click sends the interviews to Radar as evidence. |
 | **Workflow Learning** (discover) | Shows how the platform learns a manual workflow: connect sources → extract events (who, what, when, which stage) → reconstruct the real path with loops, handoffs, and manual work → the team confirms each step → measure the pilot. Includes 7 mapped real-world cases (creative review, channel adaptation, pharma MLR review, localization, performance reporting, request intake, creator content), each step tagged with the signal it is learned from. |
 | **Radar** (discover) | Maps the workflow from evidence, splits hours into automate / AI-assisted / keep creative, and ranks opportunities on 7 transparent dimensions. Every claim links to a verbatim quote from the source. |
 | **Review Loop** (pilot #1) | Turns scattered feedback from Slack, email, and Figma into themes, duplicates, contradictions (including conflicts with the brand book), one blocking decision with a named owner, and a revision brief that only fills with human-approved changes. |
@@ -65,6 +66,7 @@ With `JEV_API_KEY` set, the classification and scoring judgments go to [Jev](htt
 | Opportunity AI fit, data readiness, risk, effort, measurement | 5-level score | confidence ≥ 0.45 |
 | Review comment topic and direction | choice | confidence ≥ 0.5 |
 | Workflow Learning stage of free-text events | choice | confidence ≥ 0.5 |
+| Interviewed task mode (automate / assist / human) | choice | confidence ≥ 0.55 |
 
 Counts, hours, impact, and frequency stay in code. Below the threshold, the rule-based label is kept and the item is flagged for a team check; the UI shows each decision's confidence and probabilities. If Jev fails, everything falls back to the rules with a warning. Add `?decisions=rules` to an `/api/ai/*` call to skip Jev.
 

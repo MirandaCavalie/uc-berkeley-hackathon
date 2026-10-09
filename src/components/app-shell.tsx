@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Layers, MessagesSquare, Radar, RotateCcw, Rocket, Route, Sparkles, SwatchBook } from "lucide-react";
+import { Layers, MessagesSquare, Radar, RotateCcw, Rocket, Route, Sparkles, SwatchBook, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -13,6 +13,7 @@ const nav = [
   {
     section: "Discover",
     items: [
+      { href: "/interviews", label: "Interviews", icon: Users },
       { href: "/learn", label: "Learning", icon: Route },
       { href: "/radar", label: "Radar", icon: Radar },
     ],

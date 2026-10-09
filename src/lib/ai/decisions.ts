@@ -244,6 +244,34 @@ export async function labelComments(input: ReviewInput, brand: BrandKit): Promis
   return { labelFor: (text) => labels.get(text.trim()), judgments: report(batch, items) };
 }
 
+export async function classifyTasks(
+  tasks: { id: string; name: string; role: string; pain: string; tools: string[]; keepHuman: string; mode: WorkMode }[],
+): Promise<JudgmentReport> {
+  const batch = await askJev(
+    tasks.map((t) => {
+      const task = { name: t.name, doneBy: t.role, tools: t.tools, whatSlowsItDown: t.pain };
+      return {
+        state: t.keepHuman ? { task, personSaysNeverAutomate: t.keepHuman } : { task },
+        questions: {
+          [`task:${t.id}`]: {
+            type: "choice",
+            instructions: `How should AI be involved in \`task\`, a recurring task a marketing team member described in an interview?${
+              t.keepHuman ? " The person said `personSaysNeverAutomate` about this kind of work." : ""
+            }`,
+            criteria: modeCriteria,
+          },
+        },
+      };
+    }),
+  );
+  const items: Record<string, Judgment> = {};
+  for (const t of tasks) {
+    const j = judgment(batch.answers[`task:${t.id}`], t.mode, THRESHOLD.mode);
+    if (j) items[t.id] = j;
+  }
+  return report(batch, items);
+}
+
 export async function classifyEvents(events: Pick<WorkEvent, "id" | "actor" | "role" | "action" | "source" | "detail" | "stage">[]): Promise<JudgmentReport> {
   const criteria = Object.fromEntries(stageOptions.map((s) => [s.name, s.description]));
   const batch = await askJev(

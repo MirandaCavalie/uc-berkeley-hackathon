@@ -11,10 +11,14 @@ import {
   seedStudioInput,
   seedWorkspace,
 } from "./seed";
+import { blankInterview, seedInterviews } from "./seed-interviews";
+import { defaultRoi } from "./engine/interview";
 import type {
   BrandKit,
   Decision,
   EvidenceItem,
+  Interview,
+  RoiAssumptions,
   LaunchInput,
   LaunchState,
   PilotEvent,
@@ -47,7 +51,14 @@ interface State {
   studio: StudioState | null;
   events: PilotEvent[];
   stepReviews: Record<string, StepReview>;
+  interviews: Interview[];
+  roi: RoiAssumptions;
 
+  inviteInterview: (p: { name: string; role: string; team: string }) => string;
+  saveInterview: (iv: Interview) => void;
+  removeInterview: (id: string) => void;
+  setRoi: (patch: Partial<RoiAssumptions>) => void;
+  upsertEvidence: (item: Omit<EvidenceItem, "addedAt">) => void;
   reviewStep: (key: string, mode: WorkMode) => void;
   clearStepReview: (key: string) => void;
   setBrand: (patch: Partial<BrandKit>) => void;
@@ -91,6 +102,8 @@ const initial = () => ({
   studio: null,
   events: [] as PilotEvent[],
   stepReviews: {} as Record<string, StepReview>,
+  interviews: seedInterviews,
+  roi: defaultRoi,
 });
 
 export const useStore = create<State>()(
@@ -98,6 +111,20 @@ export const useStore = create<State>()(
     (set) => ({
       ...initial(),
 
+      inviteInterview: ({ name, role, team }) => {
+        const id = `iv-${uid()}`;
+        set((s) => ({ interviews: [...s.interviews, blankInterview(id, name, role, team, now())] }));
+        return id;
+      },
+      saveInterview: (iv) => set((s) => ({ interviews: s.interviews.map((x) => (x.id === iv.id ? iv : x)) })),
+      removeInterview: (id) => set((s) => ({ interviews: s.interviews.filter((x) => x.id !== id) })),
+      setRoi: (patch) => set((s) => ({ roi: { ...s.roi, ...patch } })),
+      upsertEvidence: (item) =>
+        set((s) => ({
+          evidence: s.evidence.some((e) => e.id === item.id)
+            ? s.evidence.map((e) => (e.id === item.id ? { ...e, ...item, addedAt: now() } : e))
+            : [...s.evidence, { ...item, addedAt: now() }],
+        })),
       reviewStep: (key, mode) => set((s) => ({ stepReviews: { ...s.stepReviews, [key]: { mode, confirmedAt: now() } } })),
       clearStepReview: (key) =>
         set((s) => {
@@ -171,6 +198,7 @@ export const useStore = create<State>()(
           workspace: { company: "Your company", industry: "", teamSize: "", synthetic: false },
           evidence: [],
           references: [],
+          interviews: [],
           drafts: { review: { assetName: "", feedback: "" }, launch: { brief: "", channels: seedLaunchInput.channels }, studio: { theme: "", constraints: "" } },
         }),
     }),
