@@ -26,6 +26,7 @@ export interface SamplePlan {
   remaining: number;
   estimatedMinutes: number;
   estimatedHours: number;
+  estimatedCost: number;
   teams: TeamSampleTarget[];
 }
 
@@ -74,7 +75,7 @@ function allocateTargets(roster: TeamPopulation[], target: number) {
   return allocations;
 }
 
-export function buildSamplePlan(workspace: Workspace, interviews: Interview[]): SamplePlan {
+export function buildSamplePlan(workspace: Workspace, interviews: Interview[], hourlyCost = 55): SamplePlan {
   const roster = rosterFor(workspace, interviews);
   const population = roster.reduce((sum, team) => sum + team.employees, 0);
   const target = sampleSize(population);
@@ -102,6 +103,7 @@ export function buildSamplePlan(workspace: Workspace, interviews: Interview[]): 
     remaining: Math.max(0, teams.reduce((sum, team) => sum + team.target, 0) - completed),
     estimatedMinutes,
     estimatedHours: Math.round((estimatedMinutes / 60) * 10) / 10,
+    estimatedCost: Math.round((estimatedMinutes / 60) * hourlyCost),
     teams,
   };
 }

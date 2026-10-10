@@ -20,7 +20,7 @@ Build a small state-machine agent for the prototype because the interview questi
 ## Entradas y salidas
 
 - Entrada: company context, team populations, employee name/role/team, and free-text answers in the browser.
-- Salida: an `Interview` record with transcript, tasks, hours, tools, friction, waits, AI use, human boundaries, and satisfaction; the Discovery work map; and an optional Jev judgment report.
+- Salida: an `Interview` record with transcript, tasks, hours, tools, friction, waits, AI use, human boundaries, and satisfaction; the Discovery work map; a sample time/cost estimate; and an optional Jev judgment report.
 
 ## Casos límite conocidos
 

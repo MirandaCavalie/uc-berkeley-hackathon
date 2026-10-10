@@ -14,7 +14,7 @@ The workspace uses a proportional sample per team. The first prototype uses a fi
 sample = population / (1 + population × margin_of_error²)
 ```
 
-The result is rounded up and each team receives a minimum of three people when its population allows it. This is a discovery starting point, not a replacement for a statistician when a company needs a formally powered study. The UI shows the target, current coverage, remaining invites, and employee time required.
+The result is rounded up and each team receives a minimum of three people when its population allows it. This is a discovery starting point, not a replacement for a statistician when a company needs a formally powered study. The UI shows the target, current coverage, remaining invites, employee time required, and the opportunity cost of that time using the workspace hourly-cost assumption.
 
 ## Agent graph
 

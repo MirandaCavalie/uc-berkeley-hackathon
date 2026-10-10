@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Badge, Button, Card, SectionTitle, Stat } from "@/components/ui";
 import { INTERVIEW_AGENT } from "@/lib/engine/interview-agent";
 import { buildSamplePlan, sampleBrief } from "@/lib/engine/sampling";
+import { defaultRoi } from "@/lib/engine/opportunities";
 import { useStore } from "@/lib/store";
 import type { Interview } from "@/lib/types";
 
@@ -17,7 +18,7 @@ const systemSteps = [
 
 export function InterviewSystem({ interviews }: { interviews: Interview[] }) {
   const workspace = useStore((s) => s.workspace);
-  const plan = buildSamplePlan(workspace, interviews);
+  const plan = buildSamplePlan(workspace, interviews, defaultRoi.hourlyCost);
 
   function copyBrief() {
     navigator.clipboard?.writeText(sampleBrief(workspace.company, plan));
@@ -87,7 +88,7 @@ export function InterviewSystem({ interviews }: { interviews: Interview[] }) {
           <div className="mt-5 grid grid-cols-3 gap-3">
             <Stat label="Target" value={plan.target} sub={`of ${plan.population}`} tone="accent" />
             <Stat label="Complete" value={plan.completed} sub={`${plan.remaining} remaining`} />
-            <Stat label="Time" value={`${plan.estimatedHours}h`} sub="employee time" />
+            <Stat label="Cost" value={`$${plan.estimatedCost.toLocaleString()}`} sub={`at $${defaultRoi.hourlyCost}/h`} />
           </div>
           <div className="mt-5 space-y-3">
             {plan.teams.map((team) => {
