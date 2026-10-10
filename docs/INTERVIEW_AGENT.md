@@ -34,6 +34,26 @@ flowchart LR
 
 The product implements this graph as a small typed state machine in `src/lib/engine/interview.ts`, with a server-side model router in `src/lib/ai/interview-agent.ts`. The state machine defines the allowed transitions and required evidence. Jev receives the current node, the employee answer, the task context, and the safe next transition, then chooses whether the agent should continue, probe, or clarify. The browser never receives the API key.
 
+## Company research graph
+
+Discovery is a multi-session research system rather than one giant chat. A research lead sets the sample and invite wave. Each sampled employee gets an isolated interview session with the same evidence contract, and those sessions can run in parallel. A consolidation layer groups the structured records by team and process, preserving the source quote beside every task and hour. Jev then evaluates the company-level opportunities.
+
+```mermaid
+flowchart LR
+  A[Research lead\nSample + invite] --> B1[Finance interview agent]
+  A --> B2[Operations interview agent]
+  A --> B3[Support interview agent]
+  A --> B4[More teams...]
+  B1 --> C[Evidence layer\nquotes · tasks · hours · tools]
+  B2 --> C
+  B3 --> C
+  B4 --> C
+  C --> D[Company brain\npatterns across teams]
+  D --> E[Jev roadmap\nsolution + readiness + ROI inputs]
+```
+
+The prototype renders this graph in Discovery so a reviewer can see the orchestration boundary. The current browser implementation uses one reusable interview agent per session; it does not create a separate codebase or prompt for every team.
+
 ## Agent capabilities
 
 - Adaptive prompts driven by the current node and the task being discussed.

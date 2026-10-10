@@ -34,7 +34,7 @@ Geist is the product typeface. Body copy stays regular and readable. Display tex
 
 ## Discovery experience
 
-Discovery opens with the interview system: sample the teams, run the agent, capture evidence, and review the roadmap. The sample plan shows the target per team and remaining coverage. The People list is the operational handoff: each person can start or continue the agent, or view their completed record.
+Discovery opens with the interview system: sample the teams, run parallel employee agents, capture evidence, and review the roadmap. The node graph makes the orchestration legible: a research lead creates the wave, isolated sessions talk to employees, the evidence layer preserves quotes, and the company layer finds patterns before Jev ranks opportunities. The sample plan shows the target per team and remaining coverage. The People list is the operational handoff: each person can start or continue the agent, or view their completed record.
 
 ## Interaction rules
 

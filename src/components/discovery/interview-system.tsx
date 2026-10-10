@@ -8,6 +8,7 @@ import { buildSamplePlan, sampleBrief } from "@/lib/engine/sampling";
 import { defaultRoi } from "@/lib/engine/opportunities";
 import { useStore } from "@/lib/store";
 import type { Interview } from "@/lib/types";
+import { AgentGraph } from "./agent-graph";
 
 const systemSteps = [
   { icon: ScanSearch, title: "Sample the teams", body: "Set a target per team before the first invite." },
@@ -116,6 +117,7 @@ export function InterviewSystem({ interviews }: { interviews: Interview[] }) {
           </p>
         </Card>
       </div>
+      <AgentGraph plan={plan} />
     </section>
   );
 }
