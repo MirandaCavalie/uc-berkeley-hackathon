@@ -3,25 +3,31 @@
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --color-paper: #f6f5f1;
+  --color-paper: #f4f2ec;
   --color-surface: #ffffff;
-  --color-sunken: #efede7;
-  --color-ink: #17160f;
-  --color-ink-2: #3d3c35;
-  --color-muted: #75736b;
-  --color-faint: #a3a198;
-  --color-line: rgb(23 22 15 / 0.08);
-  --color-line-strong: rgb(23 22 15 / 0.14);
+  --color-sunken: #ebe8df;
+  --color-ink: #13140f;
+  --color-ink-2: #3a3c33;
+  --color-muted: #6f7166;
+  --color-faint: #a2a397;
+  --color-line: rgb(19 20 15 / 0.08);
+  --color-line-strong: rgb(19 20 15 / 0.14);
 
-  --color-accent: #3b34d6;
-  --color-accent-soft: #ecebfd;
+  /* Fieldwork green: the field. Signal amber: what we found in it. */
+  --color-accent: #1e5a40;
+  --color-accent-2: #164631;
+  --color-accent-soft: #e2eee6;
+  --color-signal: #e9a23b;
+  --color-signal-soft: #fcf0dc;
 
-  --color-automate: #4f63f0;
-  --color-automate-soft: #eceffe;
-  --color-assist: #d4901f;
-  --color-assist-soft: #fbf1df;
-  --color-human: #d2427f;
-  --color-human-soft: #fbe8f0;
+  --color-automation: #3557d4;
+  --color-automation-soft: #e8edfc;
+  --color-skill: #b5741a;
+  --color-skill-soft: #faefdc;
+  --color-agent: #6d45d9;
+  --color-agent-soft: #efe9fc;
+  --color-human: #c03d68;
+  --color-human-soft: #fae7ee;
 
   --color-good: #1f8a5b;
   --color-good-soft: #e3f4ea;
@@ -118,11 +124,6 @@ body {
   }
 }
 
-.radar-sweep {
-  animation: spin 2.4s linear infinite;
-  transform-origin: 50% 50%;
-}
-
 @media (hover: hover) and (pointer: fine) {
   .lift:hover {
     box-shadow: var(--shadow-raised);
@@ -146,7 +147,6 @@ textarea {
   .reveal-bar {
     animation: fade 200ms ease both;
   }
-  .radar-sweep,
   .shimmer {
     animation: none;
   }

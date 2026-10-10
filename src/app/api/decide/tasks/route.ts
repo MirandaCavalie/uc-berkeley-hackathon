@@ -11,8 +11,7 @@ const payload = z.object({
         role: z.string().max(200),
         pain: z.string().max(2_000),
         tools: z.array(z.string().max(60)).max(20),
-        keepHuman: z.string().max(2_000),
-        mode: z.enum(["automate", "assist", "human"]),
+        process: z.string().max(100),
       }),
     )
     .max(200),

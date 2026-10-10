@@ -11,63 +11,59 @@ UC Berkeley · Oct 5–11, 2026 · **AI-Native Enterprise** track
 
 ## Submission checklist
 
-- [x] Product built during build week (existing tools, open source, and AI assistants allowed)
-- [x] Public-ready repo with README and run instructions
-- [x] Works offline with no API key (local engine), so the live demo can't break on Wi-Fi
-- [x] Synthetic data clearly labeled in the UI
-- [ ] Push the repo to a shared remote and add teammates
-- [ ] Record the demo video (follow the script below; judges weigh the demo heavily)
+- [x] Product built during build week
+- [x] Repo with README and run instructions
+- [x] Works without Jev (rule-based catalog), so the live demo can't break on Wi-Fi
+- [x] Synthetic data labeled in the UI ("Demo")
+- [ ] Push the repo and add teammates
+- [ ] Record the demo video (script below)
 - [ ] Paste the thesis paragraph into the submission form
-- [ ] Run 2–3 designer interviews (Gary's action item) and add the quotes to the pitch
-- [ ] Optional: add an API key in `.env.local` and rehearse once with the LLM engine
-- [ ] Rehearse the 3-minute live demo twice, timed
+- [ ] Run 2–3 real interviews with the app (Discovery → Invite → Start interview) and quote them in the pitch
+- [ ] Rehearse the 3-minute demo twice, timed
 
 ## Thesis (one paragraph)
 
-> In-house brand teams don't lose time on the idea; they lose it in the feedback loop. One hero asset collects 30+ comments across Slack, email, and Figma, a design lead reconciles them by hand, reviewers contradict each other and the brand book, and every unresolved conflict becomes another revision round: 18 days from first review to final revision in our sample. AI can't replace the designer (it gets to a B+, and brands need the A+), but it can take the busywork around the design. CreativeOps Radar's Review Loop consolidates a round in minutes: it groups and de-duplicates comments, catches conflicts with other reviewers and the brand book, names who has to decide, and writes a revision brief that only fills with human-approved changes. The product captures its own baseline through short async AI interviews with the creative team and measures every round against it. The result is fewer revision rounds, hours back to the design team every month, and designers who keep every design decision.
+> Every company has an AI mandate and no idea where to start. Leaders guess from the top, consultants interview twenty people over three months, and the employees who know exactly where the hours go are never asked. Fieldwork asks all of them at once. An AI interviewer spends eight minutes with each employee, learning which tasks they repeat, how long they take, what slows them down, where they wait on others, how they already use AI, and what must stay human. Then Jev, a decision model with calibrated confidence, reads each process in the employees' own words and decides what fits: an automation, an AI skill, an agent, or nothing at all, along with feasibility, data readiness, risk, effort, and adoption. Low-confidence calls go to a person. The output is a ranked roadmap with quick wins this month, a blueprint and human checkpoint for each initiative, and every hour traced to the person who reported it. In our Northwind Freight sample, 10 interviews across 6 teams surfaced 949 hours a month of recurring work and an 11-initiative roadmap worth about 534 hours a month, in one sitting.
 
 ## Rubric mapping
 
 | Criterion | Weight | Where we score |
 | --- | --- | --- |
-| Problem / Insight | 20% | AI shouldn't replace designers (B+ vs. A+); it should remove the busywork around them. The feedback loop is the sharpest version: 18 days, 2 rounds, 49 comments reconciled by hand in the sample, plus designer interview quotes. |
-| Product & Demo | 25% | One story: the loop today → consolidate a round → measure it. Review Loop with a live before/after panel; Interviews supply the baseline. Everything else sits in Labs. |
-| Technical Execution | 20% | Typed zod contracts shared by the LLM path (AI SDK v7 structured output) and deterministic local engines; verbatim-quote verification; deterministic brand checker; transparent weighted scoring; graceful LLM fallback. |
-| Market / Venture | 20% | Customer: in-house brand and marketing teams that own a brand book and ship campaigns on repeat (agencies later). Wedge: the creative review loop, where value is measurable in two weeks. Expansion (Labs): channel adaptation, brand compliance, workflow discovery. Buyer: creative ops / brand lead. |
-| Team & Pitch | 15% | Lead with a real reviewer story from interviews; keep the demo to one narrative thread. |
+| Problem / Insight | 20% | Companies fail at AI by picking the wrong tool for the work, or by not asking the people who do it. Discovery today is slow, sampled, and outdated on arrival. |
+| Product & Demo | 25% | One story in three screens: interview everyone → Jev decides what fits → roadmap. A live interview in the demo; Jev's confidence visible on every call. |
+| Technical Execution | 20% | Adaptive interview state machine with probing; Jev choice and score questions with confidence gating and rule fallback; deterministic value math; seed generated by the real interview engine; typed API contracts with zod. |
+| Market / Venture | 20% | Buyer: COO, transformation lead, or Head of AI at 200–5,000-person companies. Proof of demand: Horizon sells AI-led discovery to Mercado Libre, Despegar, PwC. Wedge: the decision step (which kind of AI, with confidence), then quarterly re-interviews as the recurring product. |
+| Team & Pitch | 15% | Lead with one employee quote, end with the roadmap. |
 
 ## 3-minute demo script
 
-Start on **Overview** after clicking **Reset demo workspace**.
+Click **Reset demo workspace** first.
 
-**0:00 – 0:30 · The problem (Overview).** "AI won't replace designers. It gets to a B+, and brands need the A+. But designers lose their week to the loop around the design." Point at the hero: *18 days from first review to final revision, 2 rounds, 49 comments reconciled by hand.* Read Alex's quote: "I reconcile 30+ comments by hand every round and half of them contradict each other."
+**0:00 – 0:25 · The problem (landing page).** "Every company has an AI mandate. Nobody knows where to start. The people who know where the hours go are never asked." Scroll to **Not everything should be an agent**: "The most common mistake is the wrong tool for the work."
 
-**0:30 – 1:00 · The baseline (Interviews).** "We got that from the team itself: an 8-minute async AI interview." Show *7 of 8 interviewed* and the **Feedback loop** card: 2.8 rounds per asset, 26 hours a month consolidating, two people waiting on feedback. "Every number on screen comes from their timeline or their own words."
+**0:25 – 1:15 · Discovery.** Open the demo. "We interviewed Northwind Freight, a 640-person logistics company: 10 people, 6 teams, in 4 days." Point at the **Work map**: Customer Support spends 152 hours a month answering the same shipment questions. Open **Dana Okafor** (View): show the probe. She said "Quantities never match," and the interviewer asked for the last time it happened. Point at **AI already in use**: 7 of 10 already use AI on their own.
 
-**1:00 – 2:20 · The product (Review Loop).** Open **Review Loop**, point at the **Today** column, then click **Consolidate feedback**. "17 comments, 6 reviewers, 3 channels, in one pass." Show the blocking decision with its owner, then the brand-book conflict: "warm it up" contradicts the guidelines. "AI never picks a side." Choose **Go with Priya — keep as is**, approve the legal theme, **Approve brief**. Point at the **With Review Loop** column: consolidated in seconds vs 3 days, ~21 hours a month back, conflicts decided before revision. "Designers keep the design."
+**1:15 – 2:20 · Decision.** Click **Decide where AI fits**. "Jev made 78 decisions in under a second." Point at the solution mix. Open **Customer replies & FAQs**: AI skill, with confidence; the readiness bars; the quotes behind it; the blueprint with its human checkpoint. Then **Scheduling & coordination**: "The rules said automation; Jev said agent, at 99%, because every booking means juggling capacity, calendars, and calls." Show **Negotiation & relationships**: kept human, because five people said so.
 
-**2:20 – 2:45 · Where it goes (Labs).** Flash **Radar** in one sentence: "The same evidence maps the rest of the workflow, so after the review loop we know what to take on next."
+**2:20 – 2:50 · Roadmap.** "11 initiatives, 534 hours a month back, starting with 3 quick wins this month." Point at the three columns, then **Kept human**.
 
-**2:45 – 3:00 · Close.** "For in-house brand teams: fewer revision rounds, hours back every month, and every design decision stays human. We start with a 2-week pilot on one campaign, measured against the team's own baseline."
+**2:50 – 3:00 · Close.** "One week from kickoff to roadmap. In 90 days, the same people answer again, and we measure what actually came back."
 
-**Backup:** if anything fails live, reload the page; state persists in the browser. The local engine needs no network.
+**Backup:** if Jev or Wi-Fi fails, the app shows rule-based estimates and says so. State persists in the browser.
 
-## Designer interview guide (2–3 interviews, 20 min each)
+## Interview guide (for live interviews)
 
-Target: designers and design leads on in-house brand teams. The same questions are in the app (**Interviews → Copy designer guide**); type answers into an interview to add them to the findings and the Review Loop baseline.
+The same questions are in the app: **Discovery → Copy interview guide**. Type the answers into an interview so they count.
 
-1. What's your part in a typical campaign?
-2. Which tasks do you repeat every campaign? For each: hours a week, tools, what makes it slow.
-3. How many feedback rounds does a typical asset go through before it's approved?
-4. When a round of feedback comes in, how long does it take to turn it into one clear list of changes?
-5. Tell me about the last time two reviewers, or a reviewer and the brand book, disagreed. What happened?
-6. Where does your work wait on someone else?
-7. Which part of your work should never be automated?
-8. If one revision round per campaign disappeared, what would you do with that time? Who would pay for that?
-
-Capture verbatim quotes. They go straight into the Problem/Insight slide.
+1. What's your role, and what does a normal week look like?
+2. Which tasks do you repeat every week? (up to five)
+3. For each task: about how long does it take in a typical week, and which tools do you use?
+4. For each task: what makes it slow or frustrating? Ask for the last time it happened.
+5. Where does your work wait on someone or something else?
+6. Do you use any AI tools today, even informally? For what?
+7. Which part of your job should stay human, no matter how good AI gets?
 
 ## Source material
 
-- Value proposition: *CreativeOps Radar* (evidence-first discovery, 7-dimension scoring, feedback-loop wedge, no invented savings, no auto-publishing).
-- Team notes: enterprise marketing focus, three demo workflows on a shared base platform, AI expands creativity rather than replacing it; references, colors, and client inputs organized in one place.
+- Gary's feedback: focus on one tangible, testable demo; keep human judgment; show clear value.
+- Reference: [Horizon](https://usehorizon.ai/), AI-powered continuous discovery: talks to employees, maps processes, ranks quick wins.

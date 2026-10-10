@@ -1,88 +1,27 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import {
-  seedBrand,
-  seedEvidence,
-  seedLaunchInput,
-  seedReferences,
-  seedReviewInput,
-  seedStudioInput,
-  seedWorkspace,
-} from "./seed";
-import { blankInterview, seedInterviews } from "./seed-interviews";
-import { defaultRoi } from "./engine/interview";
-import type {
-  BrandKit,
-  Decision,
-  EvidenceItem,
-  Interview,
-  RoiAssumptions,
-  LaunchInput,
-  LaunchState,
-  PilotEvent,
-  RadarState,
-  Reference,
-  ReviewInput,
-  ReviewState,
-  StudioInput,
-  StepReview,
-  StudioState,
-  Workspace,
-} from "./types";
-import type { WorkMode } from "./schemas";
-
-interface Drafts {
-  review: ReviewInput;
-  launch: LaunchInput;
-  studio: StudioInput;
-}
+import { defaultRoi } from "./engine/opportunities";
+import { blankInterview, seedInterviews, seedWorkspace } from "./seed-interviews";
+import type { Analysis, Interview, RoiAssumptions, Solution, Workspace } from "./types";
 
 interface State {
   workspace: Workspace;
-  brand: BrandKit;
-  evidence: EvidenceItem[];
-  references: Reference[];
-  drafts: Drafts;
-  radar: RadarState | null;
-  review: ReviewState | null;
-  launch: LaunchState | null;
-  studio: StudioState | null;
-  events: PilotEvent[];
-  stepReviews: Record<string, StepReview>;
   interviews: Interview[];
   roi: RoiAssumptions;
+  analysis: Analysis | null;
+  /** Solution types a person chose over Jev's, keyed by opportunity id. */
+  overrides: Record<string, Solution>;
 
+  setWorkspace: (patch: Partial<Workspace>) => void;
   inviteInterview: (p: { name: string; role: string; team: string }) => string;
   saveInterview: (iv: Interview) => void;
   removeInterview: (id: string) => void;
   setRoi: (patch: Partial<RoiAssumptions>) => void;
-  upsertEvidence: (item: Omit<EvidenceItem, "addedAt">) => void;
-  reviewStep: (key: string, mode: WorkMode) => void;
-  clearStepReview: (key: string) => void;
-  setBrand: (patch: Partial<BrandKit>) => void;
-  addEvidence: (item: Omit<EvidenceItem, "id" | "addedAt">) => void;
-  updateEvidence: (id: string, patch: Partial<EvidenceItem>) => void;
-  removeEvidence: (id: string) => void;
-  addReference: (ref: Omit<Reference, "id" | "addedAt">) => void;
-  removeReference: (id: string) => void;
-  setDraft: <K extends keyof Drafts>(key: K, patch: Partial<Drafts[K]>) => void;
-
-  setRadar: (s: RadarState) => void;
-  setReview: (s: ReviewState) => void;
-  setLaunch: (s: LaunchState) => void;
-  setStudio: (s: StudioState) => void;
-
-  decideReview: (id: string, d: Decision) => void;
-  resolveConflict: (id: string, choice: string) => void;
-  approveReview: () => void;
-  decideAsset: (id: string, d: Decision) => void;
-  editAsset: (id: string, patch: { headline?: string; body?: string }) => void;
-  chooseTerritory: (id: string | null) => void;
-  togglePin: (key: string) => void;
-
-  log: (e: Omit<PilotEvent, "id" | "at">) => void;
+  setAnalysis: (a: Analysis) => void;
+  override: (id: string, solution: Solution | null) => void;
   resetDemo: () => void;
   clearWorkspace: () => void;
 }
@@ -92,18 +31,10 @@ const now = () => new Date().toISOString();
 
 const initial = () => ({
   workspace: seedWorkspace,
-  brand: seedBrand,
-  evidence: seedEvidence,
-  references: seedReferences,
-  drafts: { review: seedReviewInput, launch: seedLaunchInput, studio: seedStudioInput },
-  radar: null,
-  review: null,
-  launch: null,
-  studio: null,
-  events: [] as PilotEvent[],
-  stepReviews: {} as Record<string, StepReview>,
   interviews: seedInterviews,
   roi: defaultRoi,
+  analysis: null,
+  overrides: {},
 });
 
 export const useStore = create<State>()(
@@ -111,6 +42,7 @@ export const useStore = create<State>()(
     (set) => ({
       ...initial(),
 
+      setWorkspace: (patch) => set((s) => ({ workspace: { ...s.workspace, ...patch } })),
       inviteInterview: ({ name, role, team }) => {
         const id = `iv-${uid()}`;
         set((s) => ({ interviews: [...s.interviews, blankInterview(id, name, role, team, now())] }));
@@ -119,97 +51,27 @@ export const useStore = create<State>()(
       saveInterview: (iv) => set((s) => ({ interviews: s.interviews.map((x) => (x.id === iv.id ? iv : x)) })),
       removeInterview: (id) => set((s) => ({ interviews: s.interviews.filter((x) => x.id !== id) })),
       setRoi: (patch) => set((s) => ({ roi: { ...s.roi, ...patch } })),
-      upsertEvidence: (item) =>
-        set((s) => ({
-          evidence: s.evidence.some((e) => e.id === item.id)
-            ? s.evidence.map((e) => (e.id === item.id ? { ...e, ...item, addedAt: now() } : e))
-            : [...s.evidence, { ...item, addedAt: now() }],
-        })),
-      reviewStep: (key, mode) => set((s) => ({ stepReviews: { ...s.stepReviews, [key]: { mode, confirmedAt: now() } } })),
-      clearStepReview: (key) =>
+      setAnalysis: (analysis) => set({ analysis }),
+      override: (id, solution) =>
         set((s) => {
-          const next = { ...s.stepReviews };
-          delete next[key];
-          return { stepReviews: next };
+          const overrides = { ...s.overrides };
+          if (solution) overrides[id] = solution;
+          else delete overrides[id];
+          return { overrides };
         }),
-      setBrand: (patch) => set((s) => ({ brand: { ...s.brand, ...patch } })),
-      addEvidence: (item) =>
-        set((s) => ({ evidence: [...s.evidence, { ...item, id: `ev-${uid()}`, addedAt: now() }] })),
-      updateEvidence: (id, patch) =>
-        set((s) => ({ evidence: s.evidence.map((e) => (e.id === id ? { ...e, ...patch } : e)) })),
-      removeEvidence: (id) => set((s) => ({ evidence: s.evidence.filter((e) => e.id !== id) })),
-      addReference: (ref) =>
-        set((s) => ({ references: [{ ...ref, id: `ref-${uid()}`, addedAt: now() }, ...s.references] })),
-      removeReference: (id) => set((s) => ({ references: s.references.filter((r) => r.id !== id) })),
-      setDraft: (key, patch) =>
-        set((s) => ({ drafts: { ...s.drafts, [key]: { ...s.drafts[key], ...patch } } })),
-
-      setRadar: (radar) => set({ radar }),
-      setReview: (review) => set({ review }),
-      setLaunch: (launch) => set({ launch }),
-      setStudio: (studio) => set({ studio }),
-
-      decideReview: (id, d) =>
-        set((s) => (s.review ? { review: { ...s.review, decisions: { ...s.review.decisions, [id]: d } } } : {})),
-      resolveConflict: (id, choice) =>
-        set((s) =>
-          s.review
-            ? { review: { ...s.review, conflictResolutions: { ...s.review.conflictResolutions, [id]: choice } } }
-            : {},
-        ),
-      approveReview: () => set((s) => (s.review ? { review: { ...s.review, approvedAt: now() } } : {})),
-      decideAsset: (id, d) =>
-        set((s) => (s.launch ? { launch: { ...s.launch, decisions: { ...s.launch.decisions, [id]: d } } } : {})),
-      editAsset: (id, patch) =>
-        set((s) =>
-          s.launch
-            ? {
-                launch: {
-                  ...s.launch,
-                  result: {
-                    ...s.launch.result,
-                    assets: s.launch.result.assets.map((a) => (a.id === id ? { ...a, ...patch } : a)),
-                  },
-                  decisions: { ...s.launch.decisions, [id]: "edited" },
-                },
-              }
-            : {},
-        ),
-      chooseTerritory: (id) => set((s) => (s.studio ? { studio: { ...s.studio, chosenId: id } } : {})),
-      togglePin: (key) =>
-        set((s) =>
-          s.studio
-            ? {
-                studio: {
-                  ...s.studio,
-                  pinned: s.studio.pinned.includes(key)
-                    ? s.studio.pinned.filter((k) => k !== key)
-                    : [...s.studio.pinned, key],
-                },
-              }
-            : {},
-        ),
-
-      log: (e) => set((s) => ({ events: [{ ...e, id: uid(), at: now() }, ...s.events].slice(0, 50) })),
       resetDemo: () => set(initial()),
       clearWorkspace: () =>
-        set({
-          ...initial(),
-          workspace: { company: "Your company", industry: "", teamSize: "", synthetic: false },
-          evidence: [],
-          references: [],
-          interviews: [],
-          drafts: { review: { assetName: "", feedback: "" }, launch: { brief: "", channels: seedLaunchInput.channels }, studio: { theme: "", constraints: "" } },
-        }),
+        set({ ...initial(), workspace: { company: "Your company", industry: "", employees: "", synthetic: false }, interviews: [] }),
     }),
-    {
-      name: "creativeops-radar",
-      version: 2,
-      skipHydration: true,
-      migrate: (persisted, version) => {
-        const state = persisted as Partial<State>;
-        return version < 2 ? { ...state, interviews: seedInterviews } : state;
-      },
-    },
+    { name: "fieldwork", version: 1, skipHydration: true },
   ),
 );
+
+/** False until saved state has loaded, so pages don't flash the seed data first. */
+export function useHydrated() {
+  return useSyncExternalStore(
+    (onChange) => useStore.persist.onFinishHydration(onChange),
+    () => useStore.persist.hasHydrated(),
+    () => false,
+  );
+}

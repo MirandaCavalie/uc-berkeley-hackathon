@@ -1,60 +1,40 @@
-import type { WorkMode } from "../schemas";
-import type { EvidenceItem, Interview, InterviewTask, RoiAssumptions } from "../types";
+import type { Interview } from "../types";
+import { classifyTask, OTHER } from "./processes";
 
 export const WEEKS_PER_MONTH = 4.33;
-const CAMPAIGNS_PER_MONTH = 2;
 const MAX_TASKS = 5;
 
-export const defaultRoi: RoiAssumptions = {
-  hourlyCost: 65,
-  capture: { automate: 0.7, assist: 0.35, human: 0 },
-  toolCostPerMonth: 2000,
-  manualHoursPerInterview: 3,
-};
-
-export const taskStages: { name: string; re: RegExp; mode: WorkMode }[] = [
-  { name: "Channel adaptation & resizing", re: /resiz|sizes|crop|9:16|adapt|format|cut ?downs?|re-?cop/i, mode: "automate" },
-  { name: "Asset handoff & trafficking", re: /naming|export|dam\b|upload|traffick|handoff|hand-off|file/i, mode: "automate" },
-  { name: "Creative performance recap", re: /report|recap|dashboard|ctr|cpa|metrics|numbers|performance/i, mode: "automate" },
-  { name: "Stakeholder creative review", re: /present|creative review|review meeting/i, mode: "human" },
-  { name: "Status updates & meetings", re: /status|update|standup|meeting|chas|follow(ing)? up|nudg|tracker/i, mode: "automate" },
-  { name: "Feedback consolidation", re: /feedback|comments?|consolidat|reconcil|round/i, mode: "assist" },
-  { name: "Brand & legal compliance check", re: /legal|claims?|compliance|brand check|substantiat|disclaimer/i, mode: "assist" },
-  { name: "Copy variants & localization", re: /copy|variant|headline|translat|locali|caption|subject line/i, mode: "assist" },
-  { name: "Brief intake & clarification", re: /brief|intake|clarif|kickoff|kick-off|requirements/i, mode: "assist" },
-  { name: "Reference & moodboard gathering", re: /reference|moodboard|inspiration|pinterest|research/i, mode: "assist" },
-  { name: "Ad-hoc questions & requests", re: /questions?|requests?|ad[- ]hoc|ping|answering/i, mode: "assist" },
-  { name: "Concept development", re: /concept|idea|territor|campaign idea|creative direction/i, mode: "human" },
-  { name: "Design revision", re: /revis|design|layout|retouch|edit/i, mode: "human" },
-  { name: "Final approval", re: /approv|sign[- ]?off/i, mode: "human" },
-];
-
-export function classifyTask(text: string): { stage: string; mode: WorkMode } {
-  const hit = taskStages.find((s) => s.re.test(text));
-  return hit ? { stage: hit.name, mode: hit.mode } : { stage: "Other", mode: "assist" };
-}
-
 const toolNames: [RegExp, string][] = [
-  [/figma/i, "Figma"],
-  [/photoshop|\bps\b/i, "Photoshop"],
-  [/after effects/i, "After Effects"],
+  [/excel|spreadsheet/i, "Excel"],
+  [/google sheets|\bsheets\b/i, "Google Sheets"],
   [/slack/i, "Slack"],
-  [/e-?mail|gmail|outlook/i, "Email"],
-  [/asana/i, "Asana"],
+  [/teams\b/i, "Teams"],
+  [/e-?mail|gmail|outlook|inbox/i, "Email"],
+  [/salesforce/i, "Salesforce"],
+  [/hubspot/i, "HubSpot"],
+  [/zendesk/i, "Zendesk"],
+  [/netsuite/i, "NetSuite"],
+  [/\bsap\b/i, "SAP"],
+  [/quickbooks/i, "QuickBooks"],
+  [/workday/i, "Workday"],
+  [/bamboo/i, "BambooHR"],
   [/jira/i, "Jira"],
+  [/asana/i, "Asana"],
   [/notion/i, "Notion"],
-  [/workfront/i, "Workfront"],
-  [/monday/i, "Monday"],
-  [/google docs|\bdocs\b/i, "Google Docs"],
-  [/sheets|excel|spreadsheet/i, "Sheets"],
+  [/confluence/i, "Confluence"],
+  [/power ?bi/i, "Power BI"],
   [/looker/i, "Looker"],
+  [/tableau/i, "Tableau"],
+  [/\btms\b/i, "TMS"],
+  [/\bwms\b/i, "WMS"],
+  [/\berp\b/i, "ERP"],
+  [/linkedin/i, "LinkedIn"],
+  [/docusign/i, "DocuSign"],
+  [/google docs|\bword\b|\bdocs\b/i, "Docs"],
   [/slides|powerpoint|deck/i, "Slides"],
-  [/\bdam\b|bynder|brandfolder/i, "DAM"],
-  [/meta ads|ads manager|facebook ads/i, "Meta Ads"],
-  [/google ads/i, "Google Ads"],
-  [/frame\.io/i, "Frame.io"],
-  [/canva/i, "Canva"],
-  [/drive/i, "Drive"],
+  [/chatgpt|copilot|claude|gemini/i, "AI assistant"],
+  [/phone|calls?\b/i, "Phone"],
+  [/portal/i, "Portals"],
 ];
 
 export function parseTools(text: string): string[] {
@@ -76,8 +56,7 @@ export function parseHours(text: string): number | null {
   else if (/full day|whole day/.test(t)) hours = 8;
   else if (word) hours = wordNumbers[word[1]] * (word[2].startsWith("day") ? 8 : 1);
   if (hours == null) return null;
-  if (/\bper (campaign|launch)|each (campaign|launch)|every (campaign|launch)/.test(t)) hours = (hours * CAMPAIGNS_PER_MONTH) / WEEKS_PER_MONTH;
-  else if (/\bper (month|mo)\b|a month|each month|monthly/.test(t)) hours = hours / WEEKS_PER_MONTH;
+  if (/\bper (month|mo)\b|a month|each month|monthly|month[- ]end/.test(t)) hours = hours / WEEKS_PER_MONTH;
   else if (/\bper day|a day|each day|daily|every day/.test(t) && !/half|full|whole/.test(t)) hours = hours * 5;
   return Math.round(hours * 10) / 10;
 }
@@ -90,136 +69,97 @@ export function parseTaskList(text: string): string[] {
     .slice(0, MAX_TASKS);
 }
 
-export type Phase = "intro" | "tasks" | "hours" | "hoursProbe" | "pain" | "rounds" | "roundHours" | "waits" | "human" | "rating" | "review";
-
-/** Roles that live inside the feedback loop get the review-loop questions. */
-export const CREATIVE_ROLE = /design|creative|copy|art|production|social|brand|content|video/i;
-
-function parseRounds(text: string): number | null {
-  const words: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 };
-  const nums = [...text.toLowerCase().matchAll(/\b(\d+(?:\.\d+)?|one|two|three|four|five|six)\b/g)]
-    .map((m) => words[m[1]] ?? Number(m[1]))
-    .filter((n) => n > 0 && n <= 12)
-    .slice(0, 2);
-  return nums.length ? Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 10) / 10 : null;
-}
+export type Step = "intro" | "tasks" | "hours" | "hoursProbe" | "pain" | "painProbe" | "waits" | "aiToday" | "human" | "rating" | "review";
 
 export interface RunnerState {
-  phase: Phase;
+  step: Step;
   taskIndex: number;
   interview: Interview;
 }
 
 const firstName = (name: string) => name.split(" ")[0];
+const words = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
 
 export function promptFor(state: RunnerState, company: string): string {
   const { interview: iv, taskIndex } = state;
   const task = iv.tasks[taskIndex]?.name;
-  switch (state.phase) {
+  switch (state.step) {
     case "intro":
-      return `Hi ${firstName(iv.name)}. I'm mapping how campaign work actually gets done at ${company}, so the team can decide what to automate and what stays human. It takes about 8 minutes. To start: what's your part in a typical campaign?`;
+      return `Hi ${firstName(iv.name)}, I'm the Fieldwork interviewer. ${company} asked me to learn how work really gets done, so they can bring in AI where it helps you and leave alone what shouldn't change. It takes about 8 minutes and you can answer the way you'd talk. To start: what's your role, and what does a normal week look like?`;
     case "tasks":
-      return "Which tasks do you repeat every campaign? One per line is easiest.";
+      return "Which tasks do you repeat every week? List up to five, one per line.";
     case "hours":
-      return `About how long does “${task}” take you in a typical week, and in which tools?`;
+      return `About how long does “${task}” take you in a typical week, and which tools do you use for it?`;
     case "hoursProbe":
       return `Roughly: an hour, half a day, or a full day a week on “${task}”?`;
     case "pain":
       return `What makes “${task}” slow or frustrating?`;
-    case "rounds":
-      return "How many feedback rounds does a typical asset go through before it's approved?";
-    case "roundHours":
-      return "When a round of feedback comes in, how long does it take to turn it into one clear list of changes?";
+    case "painProbe":
+      return "Can you walk me through the last time that happened?";
     case "waits":
-      return "Where does your work wait on someone else: feedback, approvals, handoffs?";
+      return "Where does your work wait on someone or something else?";
+    case "aiToday":
+      return "Do you use any AI tools today, even informally? For what?";
     case "human":
-      return "Which part of your work should never be automated?";
+      return "Which part of your job should stay human, no matter how good AI gets?";
     case "rating":
       return "Last one: how was this conversation, from 1 to 5?";
     case "review":
-      return "Thanks. Here's what I captured. Fix anything that's off, then submit.";
+      return "Thank you. Here's what I understood. Fix anything that's off, then submit.";
   }
-}
-
-/** The same guide as plain text, for running the interview live on a call. */
-export function designerGuide(): string {
-  return [
-    "Designer interview: the feedback loop",
-    "",
-    "1. What's your part in a typical campaign?",
-    "2. Which tasks do you repeat every campaign?",
-    "3. For each task: about how long does it take in a typical week, and in which tools?",
-    "4. For each task: what makes it slow or frustrating?",
-    "5. How many feedback rounds does a typical asset go through before it's approved?",
-    "6. When a round of feedback comes in, how long does it take to turn it into one clear list of changes?",
-    "7. Tell me about the last time two reviewers, or a reviewer and the brand book, disagreed. What happened?",
-    "8. Where does your work wait on someone else: feedback, approvals, handoffs?",
-    "9. Which part of your work should never be automated?",
-    "10. If one revision round per campaign disappeared, what would you do with that time?",
-    "",
-    "Capture exact quotes. Type their answers into Interviews to add them to the findings.",
-  ].join("\n");
 }
 
 const uid = () => Math.random().toString(36).slice(2, 8);
 
 export function answer(state: RunnerState, text: string): RunnerState {
   const iv = { ...state.interview, tasks: [...state.interview.tasks] };
-  const at = (phase: Phase, taskIndex = state.taskIndex): RunnerState => ({ phase, taskIndex, interview: iv });
+  const to = (step: Step, taskIndex = state.taskIndex): RunnerState => ({ step, taskIndex, interview: iv });
   const task = iv.tasks[state.taskIndex];
+  const nextTask = () => (state.taskIndex + 1 < iv.tasks.length ? to("hours", state.taskIndex + 1) : to("waits"));
 
-  switch (state.phase) {
+  switch (state.step) {
     case "intro":
       iv.context = text;
-      return at("tasks");
+      return to("tasks");
     case "tasks": {
       const names = parseTaskList(text);
-      if (!names.length) return at("tasks");
-      iv.tasks = names.map((name) => ({ id: `t-${uid()}`, name, hoursPerWeek: 0, tools: [], pain: "", ...classifyTask(name) }));
-      return at("hours", 0);
+      if (!names.length) return to("tasks");
+      iv.tasks = names.map((name) => ({ id: `t-${uid()}`, name, hoursPerWeek: 0, tools: [], pain: "", process: classifyTask(name) }));
+      return to("hours", 0);
     }
     case "hours":
     case "hoursProbe": {
       const hours = parseHours(text);
       const tools = parseTools(text);
       iv.tasks[state.taskIndex] = { ...task, hoursPerWeek: hours ?? task.hoursPerWeek, tools: tools.length ? tools : task.tools };
-      if (hours == null && state.phase === "hours") return at("hoursProbe");
-      return at("pain");
+      if (hours == null && state.step === "hours") return to("hoursProbe");
+      return to("pain");
     }
     case "pain": {
-      const refined = classifyTask(`${task.name} ${text}`);
-      iv.tasks[state.taskIndex] = { ...task, pain: text, ...(task.stage === "Other" ? refined : {}) };
-      if (state.taskIndex + 1 < iv.tasks.length) return at("hours", state.taskIndex + 1);
-      return CREATIVE_ROLE.test(iv.role) ? at("rounds") : at("waits");
+      const process = task.process === OTHER ? classifyTask(`${task.name} ${text}`) : task.process;
+      const tools = [...new Set([...task.tools, ...parseTools(text)])];
+      iv.tasks[state.taskIndex] = { ...task, pain: text, process, tools };
+      return words(text) < 7 ? to("painProbe") : nextTask();
     }
-    case "rounds":
-      iv.loop = { rounds: parseRounds(text), hoursPerRound: iv.loop?.hoursPerRound ?? null };
-      return at("roundHours");
-    case "roundHours": {
-      const t = text.toLowerCase();
-      const n = t.match(/(\d+(?:\.\d+)?)\s*(h|hours?|hrs?|min|minutes?|days?)\b/);
-      const hours = n
-        ? Number(n[1]) * (n[2].startsWith("min") ? 1 / 60 : n[2].startsWith("day") ? 8 : 1)
-        : /half (a )?day/.test(t)
-          ? 4
-          : /full day|whole day/.test(t)
-            ? 8
-            : /\ban hour\b|\bone hour\b/.test(t)
-              ? 1
-              : null;
-      iv.loop = { rounds: iv.loop?.rounds ?? null, hoursPerRound: hours != null ? Math.round(hours * 10) / 10 : null };
-      return at("waits");
+    case "painProbe": {
+      const pain = `${task.pain} ${text}`.trim();
+      const process = task.process === OTHER ? classifyTask(`${task.name} ${pain}`) : task.process;
+      iv.tasks[state.taskIndex] = { ...task, pain, process, tools: [...new Set([...task.tools, ...parseTools(text)])] };
+      return nextTask();
     }
     case "waits":
       iv.waits = text;
-      return at("human");
+      return to("aiToday");
+    case "aiToday":
+      iv.aiToday = text;
+      return to("human");
     case "human":
       iv.keepHuman = text;
-      return at("rating");
+      return to("rating");
     case "rating": {
       const n = Number(text.match(/[1-5]/)?.[0]);
       iv.satisfaction = Number.isFinite(n) ? n : null;
-      return at("review");
+      return to("review");
     }
     case "review":
       return state;
@@ -230,143 +170,59 @@ export function answer(state: RunnerState, text: string): RunnerState {
 export function replay(interview: Interview): RunnerState {
   const answers = interview.transcript.filter((m) => m.from === "person").map((m) => m.text);
   let state: RunnerState = {
-    phase: "intro",
+    step: "intro",
     taskIndex: 0,
-    interview: { ...interview, tasks: [], context: "", waits: "", keepHuman: "", satisfaction: null, loop: undefined },
+    interview: { ...interview, tasks: [], context: "", waits: "", aiToday: "", keepHuman: "", satisfaction: null },
   };
   for (const a of answers) state = answer(state, a);
   return state;
 }
 
-export const effectiveMode = (t: InterviewTask): WorkMode => (t.judgment?.applied ? (t.judgment.label as WorkMode) : t.mode);
+/** Jev's process label when it was confident, otherwise the keyword rule. */
+export const effectiveProcess = (t: Interview["tasks"][number]) => (t.judgment?.applied ? t.judgment.label : t.process);
 
-export interface Finding {
-  stage: string;
-  mode: WorkMode;
-  hoursPerMonth: number;
-  recoverableHours: number;
-  annualSavings: number;
-  people: string[];
-  roles: string[];
-  tools: string[];
-  tasks: (InterviewTask & { person: string; role: string })[];
-  waitMentions: string[];
-  keepHuman: { person: string; text: string }[];
+/** The same questions as plain text, for running an interview live on a call. */
+export function interviewGuide(company: string): string {
+  return [
+    `${company}: work discovery interview`,
+    "",
+    "1. What's your role, and what does a normal week look like?",
+    "2. Which tasks do you repeat every week? (up to five)",
+    "3. For each task: about how long does it take in a typical week, and which tools do you use?",
+    "4. For each task: what makes it slow or frustrating? Ask for the last time it happened.",
+    "5. Where does your work wait on someone or something else?",
+    "6. Do you use any AI tools today, even informally? For what?",
+    "7. Which part of your job should stay human, no matter how good AI gets?",
+    "",
+    "Write down exact quotes. Type the answers into Fieldwork so they count in the roadmap.",
+  ].join("\n");
 }
 
-export interface DiscoveryResults {
+export interface DiscoveryStats {
   invited: number;
   completed: number;
   completionRate: number;
-  waveDays: number | null;
+  teams: number;
   taskCount: number;
   hoursPerMonth: number;
-  recoverableHours: number;
-  annualSavings: number;
-  firstMonthRoi: number | null;
-  discoveryHoursSaved: number;
+  usingAi: number;
   avgSatisfaction: number | null;
-  wouldTalkAgain: number | null;
-  hoursByMode: Record<WorkMode, number>;
-  findings: Finding[];
+  days: number | null;
 }
 
-const round = (n: number) => Math.round(n);
-
-export function summarize(interviews: Interview[], roi: RoiAssumptions): DiscoveryResults {
+export function discoveryStats(interviews: Interview[]): DiscoveryStats {
   const done = interviews.filter((i) => i.status === "completed");
-  const byStage = new Map<string, Finding>();
-  const hoursByMode: Record<WorkMode, number> = { automate: 0, assist: 0, human: 0 };
-
-  for (const iv of done) {
-    for (const t of iv.tasks) {
-      const mode = effectiveMode(t);
-      const hours = t.hoursPerWeek * WEEKS_PER_MONTH;
-      hoursByMode[mode] += hours;
-      let f = byStage.get(t.stage);
-      if (!f) {
-        f = { stage: t.stage, mode, hoursPerMonth: 0, recoverableHours: 0, annualSavings: 0, people: [], roles: [], tools: [], tasks: [], waitMentions: [], keepHuman: [] };
-        byStage.set(t.stage, f);
-      }
-      f.hoursPerMonth += hours;
-      f.recoverableHours += hours * roi.capture[mode];
-      f.tasks.push({ ...t, person: iv.name, role: iv.role });
-      if (!f.people.includes(iv.name)) f.people.push(iv.name);
-      if (!f.roles.includes(iv.role)) f.roles.push(iv.role);
-      for (const tool of t.tools) if (!f.tools.includes(tool)) f.tools.push(tool);
-    }
-  }
-
-  for (const iv of done) {
-    for (const f of byStage.values()) {
-      const stage = taskStages.find((s) => s.name === f.stage);
-      if (stage && iv.waits && stage.re.test(iv.waits)) f.waitMentions.push(iv.name);
-      if (stage && iv.keepHuman && stage.re.test(iv.keepHuman)) f.keepHuman.push({ person: iv.name, text: iv.keepHuman });
-    }
-  }
-
-  const findings = [...byStage.values()]
-    .map((f) => {
-      const modeHours: Record<WorkMode, number> = { automate: 0, assist: 0, human: 0 };
-      for (const t of f.tasks) modeHours[effectiveMode(t)] += t.hoursPerWeek;
-      const mode = (Object.entries(modeHours) as [WorkMode, number][]).sort((a, b) => b[1] - a[1])[0][0];
-      return {
-        ...f,
-        mode,
-        hoursPerMonth: round(f.hoursPerMonth),
-        recoverableHours: round(f.recoverableHours),
-        annualSavings: round(f.recoverableHours * roi.hourlyCost * 12),
-      };
-    })
-    .sort((a, b) => b.recoverableHours - a.recoverableHours || b.people.length - a.people.length);
-
-  const recoverable = findings.reduce((n, f) => n + f.recoverableHours, 0);
-  const monthlySavings = recoverable * roi.hourlyCost;
   const rated = done.filter((i) => i.satisfaction != null);
   const times = done.flatMap((i) => [i.invitedAt, i.completedAt ?? i.invitedAt]).map((d) => new Date(d).getTime());
-
   return {
     invited: interviews.length,
     completed: done.length,
-    completionRate: interviews.length ? round((done.length / interviews.length) * 100) : 0,
-    waveDays: times.length ? Math.max(1, Math.ceil((Math.max(...times) - Math.min(...times)) / 86_400_000)) : null,
+    completionRate: interviews.length ? Math.round((done.length / interviews.length) * 100) : 0,
+    teams: new Set(done.map((i) => i.team)).size,
     taskCount: done.reduce((n, i) => n + i.tasks.length, 0),
-    hoursPerMonth: round(done.reduce((n, i) => n + i.tasks.reduce((m, t) => m + t.hoursPerWeek, 0), 0) * WEEKS_PER_MONTH),
-    recoverableHours: recoverable,
-    annualSavings: round(monthlySavings * 12),
-    firstMonthRoi: roi.toolCostPerMonth > 0 ? round(((monthlySavings - roi.toolCostPerMonth) / roi.toolCostPerMonth) * 100) : null,
-    discoveryHoursSaved: round(done.length * roi.manualHoursPerInterview),
+    hoursPerMonth: Math.round(done.reduce((n, i) => n + i.tasks.reduce((m, t) => m + t.hoursPerWeek, 0), 0) * WEEKS_PER_MONTH),
+    usingAi: done.filter((i) => i.aiToday && !/^\s*(no|nope|not really|none|never)\b/i.test(i.aiToday)).length,
     avgSatisfaction: rated.length ? Math.round((rated.reduce((n, i) => n + (i.satisfaction ?? 0), 0) / rated.length) * 10) / 10 : null,
-    wouldTalkAgain: rated.length ? round((rated.filter((i) => (i.satisfaction ?? 0) >= 4).length / rated.length) * 100) : null,
-    hoursByMode: { automate: round(hoursByMode.automate), assist: round(hoursByMode.assist), human: round(hoursByMode.human) },
-    findings,
-  };
-}
-
-export const INTERVIEW_EVIDENCE_ID = "ev-interviews";
-
-/** Interview answers in the request-queue and quote formats that Radar and Learning already parse. */
-export function interviewsToEvidence(interviews: Interview[]): Omit<EvidenceItem, "addedAt"> | null {
-  const done = interviews.filter((i) => i.status === "completed");
-  if (!done.length) return null;
-  let n = 100;
-  const lines = [`Team interviews: ${done.length} people, async AI-led`, ""];
-  for (const iv of done) {
-    for (const t of iv.tasks) {
-      const perCampaign = Math.round(((t.hoursPerWeek * WEEKS_PER_MONTH) / CAMPAIGNS_PER_MONTH) * 10) / 10;
-      lines.push(`#${++n} ${t.name} (${t.stage}) · ${iv.role} · est ${perCampaign}h`);
-    }
-  }
-  lines.push("");
-  for (const iv of done) {
-    for (const t of iv.tasks) if (t.pain) lines.push(`- ${iv.name} (${iv.role}): ${t.pain}`);
-    if (iv.waits) lines.push(`- ${iv.name} (${iv.role}): ${iv.waits}`);
-  }
-  return {
-    id: INTERVIEW_EVIDENCE_ID,
-    title: `Team interviews (${done.length})`,
-    kind: "requests",
-    source: "Interviews",
-    content: lines.join("\n"),
+    days: times.length ? Math.max(1, Math.ceil((Math.max(...times) - Math.min(...times)) / 86_400_000)) : null,
   };
 }

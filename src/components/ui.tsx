@@ -3,14 +3,14 @@
 import clsx from "clsx";
 import { Loader2 } from "lucide-react";
 import type { ButtonHTMLAttributes, CSSProperties, HTMLAttributes, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
-import type { WorkMode } from "@/lib/schemas";
-import { modeMeta } from "@/lib/scoring";
+import { solutionMeta } from "@/lib/engine/processes";
+import type { Solution } from "@/lib/types";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "accent" | "danger";
 
 const buttonVariants: Record<ButtonVariant, string> = {
   primary: "bg-ink text-white hover:bg-ink-2 shadow-[0_1px_0_rgb(255_255_255/0.1)_inset,0_1px_2px_rgb(0_0_0/0.2)]",
-  accent: "bg-accent text-white hover:bg-[#3029c4] shadow-[0_1px_0_rgb(255_255_255/0.15)_inset,0_1px_2px_rgb(59_52_214/0.35)]",
+  accent: "bg-accent text-white hover:bg-accent-2 shadow-[0_1px_0_rgb(255_255_255/0.15)_inset,0_1px_2px_rgb(30_90_64/0.35)]",
   secondary: "bg-surface text-ink shadow-card hover:bg-[#fbfaf7]",
   ghost: "text-ink-2 hover:bg-sunken",
   danger: "text-bad hover:bg-bad-soft",
@@ -63,7 +63,7 @@ export function Badge({
   className,
   children,
 }: {
-  tone?: "neutral" | "accent" | "good" | "warn" | "bad" | WorkMode;
+  tone?: "neutral" | "accent" | "good" | "warn" | "bad" | Solution;
   className?: string;
   children: ReactNode;
 }) {
@@ -73,8 +73,9 @@ export function Badge({
     good: "bg-good-soft text-good",
     warn: "bg-warn-soft text-warn",
     bad: "bg-bad-soft text-bad",
-    automate: "bg-automate-soft text-automate",
-    assist: "bg-assist-soft text-assist",
+    automation: "bg-automation-soft text-automation",
+    skill: "bg-skill-soft text-skill",
+    agent: "bg-agent-soft text-agent",
     human: "bg-human-soft text-human",
   };
   return (
@@ -84,11 +85,11 @@ export function Badge({
   );
 }
 
-export function ModeBadge({ mode }: { mode: WorkMode }) {
+export function SolutionBadge({ solution }: { solution: Solution }) {
   return (
-    <Badge tone={mode}>
+    <Badge tone={solution}>
       <span className="size-1.5 rounded-full bg-current" />
-      {modeMeta[mode].label}
+      {solutionMeta[solution].label}
     </Badge>
   );
 }
@@ -153,8 +154,16 @@ export function Empty({ icon, title, children, action }: { icon: ReactNode; titl
   );
 }
 
-export function Stat({ label, value, sub, tone }: { label: string; value: ReactNode; sub?: ReactNode; tone?: WorkMode | "accent" }) {
-  const color = tone === "automate" ? "text-automate" : tone === "assist" ? "text-assist" : tone === "human" ? "text-human" : tone === "accent" ? "text-accent" : "text-ink";
+const toneText: Record<Solution | "accent", string> = {
+  automation: "text-automation",
+  skill: "text-skill",
+  agent: "text-agent",
+  human: "text-human",
+  accent: "text-accent",
+};
+
+export function Stat({ label, value, sub, tone }: { label: string; value: ReactNode; sub?: ReactNode; tone?: Solution | "accent" }) {
+  const color = tone ? toneText[tone] : "text-ink";
   return (
     <div>
       <div className="text-[12px] text-muted">{label}</div>
@@ -167,7 +176,7 @@ export function Stat({ label, value, sub, tone }: { label: string; value: ReactN
 export function ScoreRing({ value, size = 44 }: { value: number; size?: number }) {
   const r = (size - 6) / 2;
   const c = 2 * Math.PI * r;
-  const tone = value >= 75 ? "var(--color-good)" : value >= 55 ? "var(--color-assist)" : "var(--color-faint)";
+  const tone = value >= 70 ? "var(--color-accent)" : value >= 50 ? "var(--color-signal)" : "var(--color-faint)";
   return (
     <div className="relative grid shrink-0 place-items-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">

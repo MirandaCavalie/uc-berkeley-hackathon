@@ -1,68 +1,14 @@
-import type {
-  LaunchResult,
-  RadarResult,
-  ReviewResult,
-  StudioResult,
-  WorkMode,
-} from "./schemas";
+/** How AI should take on a piece of work. */
+export type Solution = "automation" | "skill" | "agent" | "human";
 
-export type EvidenceKind =
-  | "brief"
-  | "feedback"
-  | "approvals"
-  | "requests"
-  | "performance"
-  | "other";
-
-export interface EvidenceItem {
-  id: string;
-  title: string;
-  kind: EvidenceKind;
-  source: string;
-  content: string;
-  addedAt: string;
-}
-
-export interface BrandColor {
-  name: string;
-  hex: string;
-  usage: string;
-}
-
-export interface ClaimRule {
-  avoid: string;
-  use: string;
-}
-
-export interface BrandKit {
-  name: string;
-  tagline: string;
-  voice: string;
-  audience: string;
-  colors: BrandColor[];
-  typography: { display: string; body: string };
-  bannedWords: string[];
-  claimRules: ClaimRule[];
-  guidelines: string[];
-  logoDataUrl: string | null;
-}
-
-export interface Reference {
-  id: string;
-  kind: "image" | "link" | "note";
-  title: string;
-  value: string;
-  addedAt: string;
-}
+export type Phase = "now" | "next" | "later" | "keep";
 
 export interface Workspace {
   company: string;
   industry: string;
-  teamSize: string;
+  employees: string;
   synthetic: boolean;
 }
-
-export type AnalysisEngine = { kind: "llm" | "local"; label: string };
 
 export interface Judgment {
   label: string;
@@ -80,43 +26,12 @@ export interface JudgmentReport {
   items: Record<string, Judgment>;
 }
 
-export interface Stamped<T> {
-  result: T;
-  engine: AnalysisEngine;
-  createdAt: string;
-  warning: string | null;
-  judgments?: JudgmentReport | null;
-}
-
-export interface ReviewInput {
-  assetName: string;
-  feedback: string;
-}
-
-export interface LaunchInput {
-  brief: string;
-  channels: string[];
-}
-
-export interface StudioInput {
-  theme: string;
-  constraints: string;
-}
-
-export type Decision = "approved" | "edited" | "rejected" | "pending";
-
-export interface StepReview {
-  mode: WorkMode;
-  confirmedAt: string;
-}
-
 export interface InterviewTask {
   id: string;
   name: string;
   hoursPerWeek: number;
   tools: string[];
-  stage: string;
-  mode: WorkMode;
+  process: string;
   pain: string;
   judgment?: Judgment | null;
 }
@@ -138,44 +53,44 @@ export interface Interview {
   context: string;
   tasks: InterviewTask[];
   waits: string;
+  aiToday: string;
   keepHuman: string;
   satisfaction: number | null;
-  loop?: { rounds: number | null; hoursPerRound: number | null };
 }
 
 export interface RoiAssumptions {
   hourlyCost: number;
-  capture: Record<WorkMode, number>;
-  toolCostPerMonth: number;
-  manualHoursPerInterview: number;
+  capture: Record<Solution, number>;
 }
 
-export interface PilotEvent {
+export type Dimension = "feasibility" | "dataReadiness" | "risk" | "effort" | "adoption";
+
+export type Scores = Record<Dimension, number>;
+
+export interface Opportunity {
   id: string;
-  workflow: "radar" | "review" | "launch" | "studio";
-  title: string;
-  detail: string;
-  at: string;
+  process: string;
+  description: string;
+  solution: Solution;
+  scores: Scores;
+  teams: string[];
+  people: string[];
+  tools: string[];
+  hoursPerMonth: number;
+  recoverableHours: number;
+  annualValue: number;
+  priority: number;
+  phase: Phase;
+  tasks: (InterviewTask & { person: string; role: string })[];
+  waitMentions: string[];
+  keepHuman: { person: string; text: string }[];
+  aiToday: { person: string; text: string }[];
 }
 
-export interface RadarState extends Stamped<RadarResult> {
-  evidenceIds: string[];
-}
-
-export interface ReviewState extends Stamped<ReviewResult> {
-  input: ReviewInput;
-  decisions: Record<string, Decision>;
-  conflictResolutions: Record<string, string>;
-  approvedAt: string | null;
-}
-
-export interface LaunchState extends Stamped<LaunchResult> {
-  input: LaunchInput;
-  decisions: Record<string, Decision>;
-}
-
-export interface StudioState extends Stamped<StudioResult> {
-  input: StudioInput;
-  chosenId: string | null;
-  pinned: string[];
+export interface Analysis {
+  createdAt: string;
+  interviewIds: string[];
+  /** Per-opportunity Jev decisions, keyed `solution:<id>` and `score:<id>:<dimension>`. */
+  judgments: JudgmentReport | null;
+  warning: string | null;
 }

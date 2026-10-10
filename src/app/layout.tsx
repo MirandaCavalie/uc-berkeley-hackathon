@@ -1,23 +1,20 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { AppShell } from "@/components/app-shell";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "CreativeOps Radar — find the work AI should take, keep the work that's creative",
+  title: "Fieldwork: find where AI actually helps",
   description:
-    "AI opportunity discovery and creative-ops copilots for enterprise marketing teams. Map your real workflow, rank where AI should help, and pilot it with humans in control.",
+    "Fieldwork interviews every employee, maps how work really gets done, and turns it into an AI roadmap: what becomes an automation, an AI skill, or an agent, and what stays human.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full`}>
-      <body className="min-h-full">
-        <AppShell>{children}</AppShell>
-      </body>
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }
