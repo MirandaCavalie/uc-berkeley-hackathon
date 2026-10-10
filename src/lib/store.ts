@@ -61,7 +61,7 @@ export const useStore = create<State>()(
         }),
       resetDemo: () => set(initial()),
       clearWorkspace: () =>
-        set({ ...initial(), workspace: { company: "Your company", industry: "", employees: "", synthetic: false }, interviews: [] }),
+        set({ ...initial(), workspace: { company: "Your company", industry: "", employees: "", synthetic: false, teamRoster: [] }, interviews: [] }),
     }),
     { name: "fieldwork", version: 1, skipHydration: true },
   ),

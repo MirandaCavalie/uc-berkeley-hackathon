@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button, Card, Input } from "@/components/ui";
 import { judgeTasks } from "@/lib/client";
 import { answer, effectiveProcess, promptFor, replay, type RunnerState } from "@/lib/engine/interview";
+import { currentAgentNode, evidenceCoverage, INTERVIEW_AGENT, nodeMeta } from "@/lib/engine/interview-agent";
 import { OTHER, processes } from "@/lib/engine/processes";
 import { useStore } from "@/lib/store";
 import type { Interview, InterviewTask } from "@/lib/types";
@@ -25,6 +26,8 @@ export function InterviewRunner({ interview, onClose }: { interview: Interview; 
   const prompt = promptFor(state, company);
   const answered = iv.transcript.filter((m) => m.from === "person").length;
   const expected = 6 + Math.max(iv.tasks.length, 3) * 2;
+  const node = nodeMeta(currentAgentNode(state));
+  const coverage = evidenceCoverage(iv);
 
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -61,14 +64,17 @@ export function InterviewRunner({ interview, onClose }: { interview: Interview; 
         <button type="button" onClick={onClose} className="pressable inline-flex items-center gap-1.5 text-[13px] text-muted hover:text-ink">
           <ArrowLeft className="size-4" /> Discovery
         </button>
-        <div className="flex items-center gap-2 text-[12px] text-muted">
+        <div className="flex items-center gap-3 text-[12px] text-muted">
+          <span className="hidden rounded-md bg-accent-soft px-2 py-1 font-medium text-accent sm:inline-flex">
+            {INTERVIEW_AGENT.name} · {node.label}
+          </span>
           <div className="h-1 w-28 overflow-hidden rounded-full bg-sunken">
             <div
               className="h-full rounded-full bg-accent transition-[width] duration-500 ease-[var(--ease-out)]"
               style={{ width: `${state.step === "review" ? 100 : Math.min(95, (answered / expected) * 100)}%` }}
             />
           </div>
-          {state.step === "review" ? "Done" : `About ${Math.max(1, Math.round((expected - answered) * 0.6))} min left`}
+          {state.step === "review" ? `${coverage.captured}/${coverage.total} evidence captured` : `About ${Math.max(1, Math.round((expected - answered) * 0.6))} min left`}
         </div>
       </div>
 

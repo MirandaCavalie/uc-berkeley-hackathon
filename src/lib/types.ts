@@ -3,11 +3,17 @@ export type Solution = "automation" | "skill" | "agent" | "human";
 
 export type Phase = "now" | "next" | "later" | "keep";
 
+export interface TeamPopulation {
+  team: string;
+  employees: number;
+}
+
 export interface Workspace {
   company: string;
   industry: string;
   employees: string;
   synthetic: boolean;
+  teamRoster?: TeamPopulation[];
 }
 
 export interface Judgment {

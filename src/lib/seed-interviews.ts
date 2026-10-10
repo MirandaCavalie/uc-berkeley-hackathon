@@ -6,6 +6,14 @@ export const seedWorkspace: Workspace = {
   industry: "Logistics",
   employees: "640 employees",
   synthetic: true,
+  teamRoster: [
+    { team: "Finance", employees: 70 },
+    { team: "Customer Support", employees: 180 },
+    { team: "Operations", employees: 210 },
+    { team: "People", employees: 30 },
+    { team: "Sales", employees: 100 },
+    { team: "IT", employees: 50 },
+  ],
 };
 
 interface Script {

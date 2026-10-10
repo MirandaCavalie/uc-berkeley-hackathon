@@ -13,6 +13,7 @@ import { groupTasks, type Group } from "@/lib/engine/opportunities";
 import { useStore } from "@/lib/store";
 import type { Interview } from "@/lib/types";
 import { InterviewRunner } from "./interview-runner";
+import { InterviewSystem } from "./interview-system";
 
 export function DiscoveryView() {
   const interviews = useStore((s) => s.interviews);
@@ -57,6 +58,8 @@ export function DiscoveryView() {
           </>
         }
       />
+
+      <InterviewSystem interviews={interviews} />
 
       {stats.completed === 0 ? (
         <Empty icon={<Users className="size-5" />} title="No completed interviews yet">
@@ -318,7 +321,7 @@ function People({ interviews, onOpen }: { interviews: Interview[]; onOpen: (id: 
               <div className="hidden text-[12px] text-faint md:block">{iv.satisfaction ? `${iv.satisfaction}/5` : ""}</div>
               <div className="flex items-center justify-end gap-1">
                 <Button size="sm" variant={iv.status === "completed" ? "ghost" : "primary"} onClick={() => onOpen(iv.id)}>
-                  {iv.status === "completed" ? "View" : iv.status === "in-progress" ? "Continue" : "Start interview"}
+                  {iv.status === "completed" ? "View record" : iv.status === "in-progress" ? "Continue agent" : "Start agent"}
                 </Button>
                 <button
                   type="button"

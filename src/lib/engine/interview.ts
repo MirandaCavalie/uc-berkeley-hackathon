@@ -85,7 +85,7 @@ export function promptFor(state: RunnerState, company: string): string {
   const task = iv.tasks[taskIndex]?.name;
   switch (state.step) {
     case "intro":
-      return `Hi ${firstName(iv.name)}, I'm the Fieldwork interviewer. ${company} asked me to learn how work really gets done, so they can bring in AI where it helps you and leave alone what shouldn't change. It takes about 8 minutes and you can answer the way you'd talk. To start: what's your role, and what does a normal week look like?`;
+      return `Hi ${firstName(iv.name)}, I'm the Fieldwork Agent. ${company} asked me to learn how work really gets done, so they can bring in AI where it helps you and leave alone what shouldn't change. It takes about 8 minutes and you can answer the way you'd talk. To start: what's your role, and what does a normal week look like?`;
     case "tasks":
       return "Which tasks do you repeat every week? List up to five, one per line.";
     case "hours":
