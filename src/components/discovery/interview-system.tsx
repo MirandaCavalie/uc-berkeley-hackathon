@@ -11,10 +11,10 @@ import type { Interview } from "@/lib/types";
 import { AgentGraph } from "./agent-graph";
 
 const systemSteps = [
-  { icon: ScanSearch, title: "Sample the teams", body: "Set a target per team before the first invite." },
-  { icon: Radio, title: "Run the agent", body: "An adaptive eight-minute conversation follows the work." },
-  { icon: GitBranch, title: "Capture evidence", body: "Turn answers into tasks, time, tools, blockers, and boundaries." },
-  { icon: Check, title: "Review the roadmap", body: "Jev ranks opportunities only after people can correct the record." },
+  { icon: ScanSearch, title: "Sample teams", body: "Set a target before inviting." },
+  { icon: Radio, title: "Listen", body: "Run a short adaptive interview." },
+  { icon: GitBranch, title: "Keep evidence", body: "Capture work, time, tools, and friction." },
+  { icon: Check, title: "Decide", body: "Rank opportunities after review." },
 ];
 
 export function InterviewSystem({ interviews }: { interviews: Interview[] }) {
@@ -29,8 +29,8 @@ export function InterviewSystem({ interviews }: { interviews: Interview[] }) {
   return (
     <section className="mb-10">
       <SectionTitle
-        title="Interview system"
-        meta="the agent behind discovery"
+        title="Discovery engine"
+        meta="the system behind the roadmap"
         action={
           <Badge tone="accent">
             <span className="size-1.5 rounded-full bg-current" />
@@ -51,9 +51,7 @@ export function InterviewSystem({ interviews }: { interviews: Interview[] }) {
                   <p className="text-[12px] text-muted">Adaptive discovery, evidence first</p>
                 </div>
               </div>
-              <p className="mt-5 max-w-2xl text-[14px] leading-relaxed text-ink-2">
-                The agent asks about the work people repeat, follows vague answers with a concrete example, and produces a record the employee can review. It does not decide what to automate while it is interviewing.
-              </p>
+              <p className="mt-5 max-w-2xl text-[14px] leading-relaxed text-ink-2">A bounded conversation about repeated work, friction, and judgment. Employees review the record before it reaches the roadmap.</p>
             </div>
             <div className="rounded-xl bg-accent-soft px-3 py-2 text-right">
               <div className="text-[11px] font-medium uppercase tracking-wide text-accent">Live in this demo</div>
@@ -82,7 +80,7 @@ export function InterviewSystem({ interviews }: { interviews: Interview[] }) {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-[16px] font-semibold tracking-tight">Sample plan</h3>
-              <p className="mt-0.5 text-[12px] text-muted">95% confidence · roughly ±10% precision</p>
+              <p className="mt-0.5 text-[12px] text-muted">Proportional sample · ±10% starting precision</p>
             </div>
             <Mail className="size-4 text-accent" />
           </div>

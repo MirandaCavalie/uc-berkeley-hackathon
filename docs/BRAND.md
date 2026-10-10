@@ -6,9 +6,9 @@
 
 ## Promise
 
-**Find where AI actually helps.**
+**Make work visible. Make AI useful.**
 
-One-liner: Fieldwork interviews every employee, maps how work really gets done, and turns it into an AI roadmap: what becomes an automation, an AI skill, or an agent, and what stays human.
+One-liner: Fieldwork listens to the people doing the work, finds the friction between teams, and turns it into a defensible AI roadmap.
 
 ## Beliefs
 
@@ -29,25 +29,26 @@ Plain, specific, calm. We sound like a good researcher, not a hype deck.
 
 | Token | Hex | Use |
 | --- | --- | --- |
-| Field purple | `#6D45D9` | Primary actions, the logo, headings on dark |
-| Signal amber | `#E9A23B` | What we found: highlights, the dot in the logo |
-| Paper | `#F4F2EC` | Background |
-| Ink | `#13140F` | Text |
-| Automation | `#3557D4` | Solution type |
-| AI skill | `#B5741A` | Solution type |
-| AI agent | `#6D45D9` | Solution type |
-| Keep human | `#C03D68` | Solution type |
+| Iris | `#7161E8` | Primary actions, the logo, active states |
+| Deep iris | `#5748C7` | Hover and pressed states |
+| Signal apricot | `#F0A563` | Findings, highlights, the dot in the logo |
+| Lavender paper | `#F7F6FB` | Background |
+| Ink violet | `#19182D` | Text |
+| Automation | `#4F64D8` | Solution type |
+| AI skill | `#B87535` | Solution type |
+| AI agent | `#7161E8` | Solution type |
+| Keep human | `#BD547B` | Solution type |
 
-**Logo:** a geometric F with soft corners and an amber full stop. Discovery that ends in a finding. The same full stop closes the tagline on the landing page.
+**Logo:** four field lines and an apricot signal point. The lines represent work mapped across teams; the point is the finding worth acting on.
 
-- `Mark`: purple F, amber dot. Use on light backgrounds; `inverted` for dark.
-- `Logo`: white F on a purple rounded tile. App icon, favicon, interviewer avatar.
+- `Mark`: iris field lines, apricot dot. Use on light backgrounds; `inverted` for dark.
+- `Logo`: white field lines on an iris rounded tile. App icon, favicon, interviewer avatar.
 - `Wordmark`: mark plus "Fieldwork" in Geist semibold, tight tracking (-0.04em). Text height is 0.72 of the mark size.
 - Clear space: half the mark size on every side. Never recolor the dot, outline the mark, or set the name in another typeface.
 
 Files: `src/components/brand.tsx`, `src/app/icon.svg`, `src/app/apple-icon.tsx`, `src/app/opengraph-image.tsx` (fonts in `src/assets/fonts`).
 
-**Type:** Geist, semibold with tight tracking for display, regular for text.
+**Type:** Geist, regular for body copy and medium for display. Avoid italic display text, all-caps paragraphs, and decorative gradients.
 
 ## Positioning
 

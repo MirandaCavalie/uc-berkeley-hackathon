@@ -1,45 +1,84 @@
-# Fieldwork interface design
+# Fieldwork interface system
 
-## Direction
-
-Fieldwork should feel like a calm research instrument: quiet surfaces, clear hierarchy, and evidence close to the decision it supports. The interface should help a company move through three questions:
-
-1. Who have we heard from, and is the sample balanced?
-2. What work did people describe, with what evidence?
-3. Which opportunities deserve a human decision next?
+Fieldwork is a calm research instrument for finding where work gets stuck. The interface should feel precise and useful before it feels impressive: one clear action, short explanations, and evidence beside every decision.
 
 ## Brand
 
-- **Name:** Fieldwork. It describes going to the place where work happens and asking the people doing it.
-- **Primary purple:** `#6D45D9`. Used for agent actions, active navigation, progress, and the Fieldwork mark.
-- **Deep purple:** `#5432B1`. Used for hover states and pressed actions.
-- **Purple wash:** `#EFE9FC`. Used behind agent status and selected evidence.
-- **Signal amber:** `#E9A23B`. Used sparingly for findings, attention, and the logo dot.
-- **Paper:** `#F4F2EC`. The workspace background.
-- **Ink:** `#13140F`. Body text and high-contrast controls.
+**Name:** Fieldwork
 
-Purple is the product identity. Status colors keep their meaning: green means a completed or healthy state, amber means attention, red means risk, and pink means a human boundary.
+**Promise:** Make work visible. Make AI useful.
 
-## Type
+**Position:** Fieldwork listens to the people doing the work, finds the friction between teams, and turns it into a defensible AI roadmap.
 
-Geist is the product typeface. Body copy stays regular and readable. Display text uses a lighter semibold treatment with tight tracking rather than italics or decorative effects. Headings are short; supporting copy should explain one idea in one or two sentences.
+The mark uses four field lines and an apricot signal point. The lines represent work mapped across teams; the point is the finding worth acting on. The mark is implemented as a vector in `src/components/brand.tsx`, so it stays crisp in the app, favicon, Apple icon, and social card.
 
-## Layout
+## Color tokens
 
-- Keep the primary action in the page header.
-- Use one dominant card per decision area instead of a wall of equal cards.
-- Use a two-column layout for system status and the next action; collapse it to one column on small screens.
-- Prefer progressive disclosure for transcripts, task evidence, and scoring details.
-- Show the employee quote next to the derived task or recommendation whenever possible.
+| Token | Value | Role |
+| --- | --- | --- |
+| Iris | `#7161E8` | Primary action, active state, agent identity |
+| Deep iris | `#5748C7` | Hover and pressed state |
+| Lavender paper | `#F7F6FB` | App background |
+| White | `#FFFFFF` | Cards and focused surfaces |
+| Ink violet | `#19182D` | High-contrast text |
+| Muted violet | `#77758A` | Supporting copy |
+| Signal apricot | `#F0A563` | Findings, attention, logo point |
+| Human rose | `#BD547B` | Human boundary and protected judgment |
 
-## Discovery experience
+Purple is the product identity. Green, amber, and red remain semantic status colors only. They do not compete with the brand color.
 
-Discovery opens with the interview system: sample the teams, run parallel employee agents, capture evidence, and review the roadmap. The node graph makes the orchestration legible: a research lead creates the wave, isolated sessions talk to employees, the evidence layer preserves quotes, and the company layer finds patterns before Jev ranks opportunities. The sample plan shows the target per team and remaining coverage. The People list is the operational handoff: each person can start or continue the agent, or view their completed record.
+## Type and voice
 
-## Interaction rules
+Geist is used consistently. Body text is regular and comfortable. Display text uses medium weight and tight tracking. No italic display treatment, decorative gradients, or all-caps paragraphs.
 
-- Buttons say what will happen: “Start agent”, “Continue agent”, “View record”, “Copy next invite brief”.
-- A loading state explains which system is working.
-- The employee can correct the record before submission.
-- No confidence score appears without the evidence or rule that produced it.
-- Avoid long blocks of marketing copy inside the product workflow.
+Write like a researcher:
+
+- Use “hours back per month,” not “unlock productivity.”
+- Use “three people reported waiting on Finance,” not “cross-functional friction exists.”
+- Use short labels: “Evidence,” “Quality,” “Review,” “Owner.”
+- Keep supporting copy to one or two sentences. Put detail behind an expansion or a linked record.
+
+## Layout rules
+
+- One primary action per screen.
+- One dominant card per decision area.
+- Use the page header for the action; do not repeat it in every card.
+- Use whitespace to group information before adding borders.
+- Keep the evidence quote near the derived task, score, or recommendation.
+- Prefer a compact summary row followed by progressive detail.
+- On mobile, keep the graph horizontally scrollable and keep the current node visible.
+
+## Product surfaces
+
+### Landing
+
+The landing page has one promise, one product conversation, and one workspace action above the fold. The lower sections explain the three-step path, the four possible recommendations, and the one-week engagement in short cards.
+
+### Discovery
+
+Discovery opens with four compact signals: sample, coverage, evidence, and quality. The control graph shows the eight agent roles and their gates. The People list is the operational handoff: start, continue, or review a session.
+
+### Opportunities
+
+The first visual question is “what kind of decision is this?” The solution mix answers it before the ranked list. Each expanded opportunity keeps readiness, source quotes, the blueprint, and the human checkpoint together.
+
+### Roadmap
+
+The top card states the outcome and its source. Three phases organize the work. “Kept human” has equal visual weight so the product never implies that every task should be automated.
+
+## Motion
+
+Motion is functional: short enter transitions, progress bars that reveal status, and press feedback on controls. Respect `prefers-reduced-motion`. Do not animate decorative gradients or make the brand mark spin.
+
+## Accessibility
+
+Use visible focus states, semantic headings, labels for form controls, readable contrast, and text alongside status color. The graph status must be understandable from its label, not only its color. The interview must work with keyboard input and screen readers.
+
+## Implementation map
+
+- Tokens and motion: `src/app/globals.css`
+- Mark, logo, and wordmark: `src/components/brand.tsx`
+- Shared controls: `src/components/ui.tsx`
+- App shell and navigation: `src/components/app-shell.tsx`
+- Discovery graph: `src/components/discovery/agent-graph.tsx`
+- Product landing: `src/app/(site)/page.tsx`

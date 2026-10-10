@@ -20,10 +20,10 @@ const examples: Record<Solution, string> = {
 };
 
 const week = [
-  { day: "Monday", title: "Invite everyone", body: "One link per employee. No workshops, no calendars." },
-  { day: "Tuesday–Wednesday", title: "Everyone talks to the interviewer", body: "Eight minutes each, in their own words, at the same time." },
-  { day: "Thursday", title: "Jev decides", body: "Each process gets a type of AI, readiness scores, and a priority." },
-  { day: "Friday", title: "Roadmap review", body: "Quick wins this month, what to build next, and what stays human." },
+  { day: "Monday", title: "Invite the wave", body: "One focused invite per team." },
+  { day: "Tuesday–Wednesday", title: "Listen to the work", body: "Short conversations, in their own words." },
+  { day: "Thursday", title: "Make the calls", body: "Evidence becomes a ranked set of choices." },
+  { day: "Friday", title: "Review the roadmap", body: "Owners, next steps, and human boundaries." },
 ];
 
 export default function Landing() {
@@ -36,10 +36,10 @@ export default function Landing() {
           </Link>
           <nav className="flex items-center gap-1 text-[13.5px]">
             <a href="#how" className="hidden rounded-lg px-3 py-1.5 text-ink-2 hover:bg-sunken sm:block">
-              How it works
+              Product
             </a>
             <a href="#types" className="hidden rounded-lg px-3 py-1.5 text-ink-2 hover:bg-sunken sm:block">
-              What we recommend
+              Decisions
             </a>
             <Link
               href="/discovery"
@@ -55,29 +55,28 @@ export default function Landing() {
         <div>
           <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-surface px-3 py-1 text-[12.5px] text-muted shadow-card">
             <span className="size-1.5 rounded-full bg-signal" />
-            AI discovery for companies that don&apos;t know where to start
+            AI work discovery for large teams
           </div>
-          <h1 className="font-display text-[44px] leading-[1.03] tracking-[-0.035em] text-ink sm:text-[60px]">
-            {BRAND.tagline.slice(0, -1)}
-            <span className="text-signal">.</span>
-          </h1>
+          <h1 className="font-display max-w-xl text-[46px] leading-[1.02] text-ink sm:text-[64px]">{BRAND.tagline}</h1>
           <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-ink-2">{BRAND.pitch}</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               href="/discovery"
               className="pressable inline-flex h-11 items-center gap-2 rounded-lg bg-accent px-5 text-[14.5px] font-medium text-white shadow-[0_1px_2px_rgb(109_69_217/0.35)] hover:bg-accent-2"
             >
-              See it with a real company <ArrowRight className="size-4" />
+              Open the workspace <ArrowRight className="size-4" />
             </Link>
-            <Link
-              href="/roadmap"
+            <a
+              href="/demo/fieldwork-demo.mp4"
+              target="_blank"
+              rel="noreferrer"
               className="pressable inline-flex h-11 items-center rounded-lg bg-surface px-5 text-[14.5px] font-medium shadow-card hover:bg-[#fbfaf7]"
             >
-              View a sample roadmap
-            </Link>
+              Watch the demo
+            </a>
           </div>
           <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-muted">
-            {["Every employee, not a sample", "Roadmap in one week", "Every number traces to a quote"].map((t) => (
+            {["Team quotas", "Source quotes", "Human review"].map((t) => (
               <span key={t} className="inline-flex items-center gap-1.5">
                 <Check className="size-3.5 text-accent" /> {t}
               </span>
@@ -106,9 +105,9 @@ export default function Landing() {
       <section className="border-y border-line bg-surface">
         <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 md:grid-cols-3">
           {[
-            { k: "The mandate", v: "Every board wants an AI plan. Most companies start by buying tools and hoping someone uses them." },
-            { k: "The guess", v: "Consultants interview twenty people over three months and deliver a deck that is outdated on arrival." },
-            { k: "The answer", v: "The people doing the work already know where the hours go. Nobody asks all of them." },
+            { k: "The mandate", v: "Build an AI plan people can actually use." },
+            { k: "The signal", v: "The people doing the work know where the hours go." },
+            { k: "The output", v: "A ranked roadmap with evidence behind every decision." },
           ].map((x) => (
             <div key={x.k}>
               <div className="text-[12.5px] font-medium tracking-wide text-signal uppercase">{x.k}</div>
@@ -119,26 +118,27 @@ export default function Landing() {
       </section>
 
       <section id="how" className="scroll-mt-16 mx-auto max-w-6xl px-6 py-20">
-        <h2 className="font-display text-[32px] leading-tight">Two workflows, one roadmap</h2>
+        <div className="eyebrow">From signal to decision</div>
+        <h2 className="mt-3 font-display text-[32px] leading-tight">One clear path to an AI roadmap</h2>
         <div className="mt-10 grid gap-4 md:grid-cols-3">
           {[
             {
               icon: MessagesSquare,
               step: "1",
               title: "Discovery",
-              body: "An AI interviewer talks to every employee at once. It asks what they repeat each week, how long it takes, what slows it down, and where it digs deeper. Answers become a work map of hours by team and process.",
+              body: "Sample each team, then run focused conversations about tasks, time, tools, friction, and human judgment.",
             },
             {
               icon: Scale,
               step: "2",
               title: "Decision",
-              body: "Jev, a decision model, reads each process and decides what fits: an automation, an AI skill, an agent, or nothing at all. It scores readiness and risk, and shows its confidence. Low-confidence calls go to a person.",
+              body: "Group the evidence by team and process. Keep the quote beside the finding and send weak evidence back for review.",
             },
             {
               icon: MapIcon,
               step: "3",
               title: "Roadmap",
-              body: "Ranked initiatives in three phases, each with a blueprint, a human checkpoint, and the metric to measure it. Ninety days later, the same people answer again, and the roadmap updates.",
+              body: "Prioritize the work with value, readiness, risk, owners, and a metric. Keep judgment with the people who own it.",
             },
           ].map((c) => (
             <div key={c.title} className="rounded-2xl bg-surface p-6 shadow-card">
@@ -157,7 +157,7 @@ export default function Landing() {
         <div className="mx-auto max-w-6xl px-6 py-20">
           <h2 className="font-display text-[32px] leading-tight">Not everything should be an agent</h2>
           <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-white/65">
-            The most common AI mistake is the wrong tool for the work. Fieldwork recommends one of four, for every process it finds.
+            The right answer is sometimes automation, sometimes an agent, and sometimes a human checkpoint.
           </p>
           <div className="mt-10 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
             {(Object.keys(solutionMeta) as Solution[]).map((s) => (
@@ -172,10 +172,9 @@ export default function Landing() {
       </section>
 
       <section className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="font-display text-[32px] leading-tight">One week from kickoff to roadmap</h2>
-        <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted">
-          A traditional discovery project samples a few people over months. Fieldwork asks everyone in a week.
-        </p>
+        <div className="eyebrow">The engagement</div>
+        <h2 className="mt-3 font-display text-[32px] leading-tight">A week of useful evidence</h2>
+        <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted">A proportional sample keeps discovery focused. Every conversation makes the next decision clearer.</p>
         <ol className="mt-10 grid gap-4 md:grid-cols-4">
           {week.map((w, i) => (
             <li key={w.day} className="relative rounded-2xl bg-surface p-5 shadow-card">
@@ -191,9 +190,9 @@ export default function Landing() {
       <section className="mx-auto max-w-6xl px-6 pb-20">
         <div className="grid gap-4 md:grid-cols-3">
           {[
-            { t: "Ask the people who do the work", b: "Leaders see the org chart. Employees see where the hours go." },
-            { t: "Every number traces to a quote", b: "Each hour on the roadmap links back to the person who reported it." },
-            { t: "Human by default where judgment matters", b: "If people say it should stay human, Jev hears it, and so does the roadmap." },
+            { t: "Ask the people doing the work", b: "See the tasks the org chart misses." },
+            { t: "Keep evidence close", b: "Trace every finding back to a source answer." },
+            { t: "Leave judgment human", b: "Make room for context, risk, and ownership." },
           ].map((p) => (
             <div key={p.t} className="rounded-2xl border border-line-strong p-5">
               <Quote className="size-4 text-signal" />
@@ -207,10 +206,8 @@ export default function Landing() {
       <section className="mx-auto max-w-6xl px-6 pb-24">
         <div className="flex flex-col items-start justify-between gap-6 rounded-3xl bg-accent p-10 text-white md:flex-row md:items-center">
           <div>
-            <div className="font-display text-[28px] leading-tight">See Northwind Freight&apos;s roadmap</div>
-            <p className="mt-2 max-w-lg text-[14.5px] text-white/75">
-              10 employees, 6 teams, 37 recurring tasks. From interviews to a ranked AI roadmap in one sitting.
-            </p>
+            <div className="font-display text-[28px] leading-tight">See the work behind the roadmap</div>
+            <p className="mt-2 max-w-lg text-[14.5px] text-white/75">Explore the Fieldwork workspace from interview to decision.</p>
           </div>
           <Link
             href="/discovery"

@@ -2,26 +2,22 @@ import clsx from "clsx";
 
 export const BRAND = {
   name: "Fieldwork",
-  tagline: "Find where AI actually helps.",
-  pitch:
-    "Fieldwork interviews every employee, maps how work really gets done, and turns it into an AI roadmap: what becomes an automation, an AI skill, or an agent, and what stays human.",
-  purple: "#6D45D9",
-  amber: "#E9A23B",
-  ink: "#13140F",
-  paper: "#F4F2EC",
+  tagline: "Make work visible. Make AI useful.",
+  pitch: "Fieldwork listens to the people doing the work, finds the friction between teams, and turns it into a defensible AI roadmap.",
+  purple: "#7161E8",
+  amber: "#F0A563",
+  ink: "#19182D",
+  paper: "#F7F6FB",
 } as const;
 
-/** An F with a full stop: discovery that ends in a finding. Drawn on a 32-unit grid. */
-export const MARK_F =
-  "M7.5 5h17a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5H12v2h8.5a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5H12v6.5a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 6 25.5v-19A1.5 1.5 0 0 1 7.5 5z";
-export const MARK_DOT = { cx: 17, cy: 24, r: 3 } as const;
-/** Places the mark optically centered inside a 32-unit tile. */
-export const TILE_TRANSFORM = "translate(4 3.6) scale(.75)";
+/** Three field lines and a signal point: the work map becoming a finding. */
+export const MARK_FIELD = "M7 7.5h16M7 13h11M7 18.5h7M7 24h5";
+export const MARK_DOT = { cx: 23, cy: 22.5, r: 3 } as const;
 
 export function Mark({ size = 24, inverted, className }: { size?: number; inverted?: boolean; className?: string }) {
   return (
     <svg viewBox="0 0 32 32" width={size} height={size} className={clsx("shrink-0", className)} aria-hidden>
-      <path d={MARK_F} fill={inverted ? "white" : "var(--color-accent)"} />
+      <path d={MARK_FIELD} fill="none" stroke={inverted ? "white" : "var(--color-accent)"} strokeLinecap="round" strokeWidth="3" />
       <circle {...MARK_DOT} fill="var(--color-signal)" />
     </svg>
   );
@@ -32,8 +28,8 @@ export function Logo({ size = 28, className }: { size?: number; className?: stri
   return (
     <svg viewBox="0 0 32 32" width={size} height={size} className={clsx("shrink-0", className)} aria-hidden>
       <rect width="32" height="32" rx="8" fill="var(--color-accent)" />
-      <g transform={TILE_TRANSFORM}>
-        <path d={MARK_F} fill="white" />
+      <g>
+        <path d={MARK_FIELD} fill="none" stroke="white" strokeLinecap="round" strokeWidth="3" />
         <circle {...MARK_DOT} fill="var(--color-signal)" />
       </g>
     </svg>

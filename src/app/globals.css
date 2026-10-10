@@ -3,31 +3,31 @@
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --color-paper: #f4f2ec;
+  --color-paper: #f7f6fb;
   --color-surface: #ffffff;
-  --color-sunken: #ebe8df;
-  --color-ink: #13140f;
-  --color-ink-2: #3a3c33;
-  --color-muted: #6f7166;
-  --color-faint: #a2a397;
-  --color-line: rgb(19 20 15 / 0.08);
-  --color-line-strong: rgb(19 20 15 / 0.14);
+  --color-sunken: #eeecf5;
+  --color-ink: #19182d;
+  --color-ink-2: #45435b;
+  --color-muted: #77758a;
+  --color-faint: #a4a2b2;
+  --color-line: rgb(25 24 45 / 0.08);
+  --color-line-strong: rgb(25 24 45 / 0.14);
 
   /* Fieldwork purple: the field. Signal amber: what we found in it. */
-  --color-accent: #6d45d9;
-  --color-accent-2: #5432b1;
-  --color-accent-soft: #efe9fc;
-  --color-signal: #e9a23b;
-  --color-signal-soft: #fcf0dc;
+  --color-accent: #7161e8;
+  --color-accent-2: #5748c7;
+  --color-accent-soft: #eeebff;
+  --color-signal: #f0a563;
+  --color-signal-soft: #fff0e4;
 
-  --color-automation: #3557d4;
-  --color-automation-soft: #e8edfc;
-  --color-skill: #b5741a;
-  --color-skill-soft: #faefdc;
-  --color-agent: #6d45d9;
-  --color-agent-soft: #efe9fc;
-  --color-human: #c03d68;
-  --color-human-soft: #fae7ee;
+  --color-automation: #4f64d8;
+  --color-automation-soft: #eaedff;
+  --color-skill: #b87535;
+  --color-skill-soft: #fff0df;
+  --color-agent: #7161e8;
+  --color-agent-soft: #eeebff;
+  --color-human: #bd547b;
+  --color-human-soft: #fbeaf1;
 
   --color-good: #1f8a5b;
   --color-good-soft: #e3f4ea;
@@ -36,8 +36,8 @@
   --color-bad: #c73a3a;
   --color-bad-soft: #fbe7e5;
 
-  --shadow-card: 0 1px 0 rgb(23 22 15 / 0.03), 0 1px 3px rgb(23 22 15 / 0.05), 0 0 0 1px rgb(23 22 15 / 0.06);
-  --shadow-raised: 0 1px 0 rgb(23 22 15 / 0.03), 0 8px 24px -8px rgb(23 22 15 / 0.14), 0 0 0 1px rgb(23 22 15 / 0.07);
+  --shadow-card: 0 1px 0 rgb(25 24 45 / 0.03), 0 2px 8px rgb(25 24 45 / 0.04), 0 0 0 1px rgb(25 24 45 / 0.06);
+  --shadow-raised: 0 1px 0 rgb(25 24 45 / 0.03), 0 14px 34px -12px rgb(25 24 45 / 0.18), 0 0 0 1px rgb(25 24 45 / 0.07);
 }
 
 :root {
@@ -64,8 +64,17 @@ body {
 }
 
 .font-display {
+  font-weight: 500;
+  letter-spacing: -0.035em;
+}
+
+.eyebrow {
+  color: var(--color-accent);
+  font-size: 0.68rem;
   font-weight: 600;
-  letter-spacing: -0.025em;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 /* Pressable feedback: every button should feel like it heard the click. */
