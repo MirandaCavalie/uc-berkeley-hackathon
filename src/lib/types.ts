@@ -62,6 +62,73 @@ export interface Interview {
   aiToday: string;
   keepHuman: string;
   satisfaction: number | null;
+  /** Explicit participation scope. Missing means the record still needs a human consent check. */
+  consent?: {
+    status: "pending" | "accepted" | "declined";
+    acceptedAt?: string;
+  };
+}
+
+export type ResearchNodeId =
+  | "sampling"
+  | "consentContext"
+  | "interviewSessions"
+  | "evidenceExtraction"
+  | "qualityAudit"
+  | "teamSynthesis"
+  | "companySynthesis"
+  | "roadmapDecision";
+
+export type ResearchNodeStatus = "queued" | "running" | "needs_review" | "complete" | "blocked";
+
+export interface ResearchNodeSnapshot {
+  id: ResearchNodeId;
+  label: string;
+  agent: string;
+  stage: "control" | "collection" | "analysis" | "decision";
+  purpose: string;
+  input: string;
+  output: string;
+  criterion: string;
+  status: ResearchNodeStatus;
+  signal: string;
+  detail: string;
+  progress?: { current: number; target: number };
+}
+
+export interface ResearchEdge {
+  from: ResearchNodeId;
+  to: ResearchNodeId;
+  label?: string;
+  feedback?: boolean;
+}
+
+export interface InterviewQuality {
+  completeness: number;
+  specificity: number;
+  traceability: number;
+  score: number;
+  missing: string[];
+  riskFlags: string[];
+  needsReview: boolean;
+}
+
+export interface ResearchRun {
+  id: string;
+  startedAt: string;
+  nodes: ResearchNodeSnapshot[];
+  edges: ResearchEdge[];
+  metrics: {
+    population: number;
+    target: number;
+    completed: number;
+    teamsCovered: number;
+    teamsTarget: number;
+    evidenceReady: number;
+    evidenceNeedsReview: number;
+    qualityScore: number;
+    synthetic: boolean;
+  };
 }
 
 export interface RoiAssumptions {

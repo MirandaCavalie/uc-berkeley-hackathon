@@ -1,74 +1,106 @@
-# Fieldwork interview agent
+# Fieldwork research agent
 
-## Product job
+Fieldwork is a company research system. Its job is to discover how work really happens, where employees lose time, which tools and handoffs shape the work, where people already use AI, and which decisions must remain human. It should be treated as evidence collection and synthesis, not as a chatbot that improvises an automation recommendation.
 
-Fieldwork helps a large company see where AI can improve work by interviewing a defensible sample of employees, extracting evidence from their answers, and passing that evidence into a roadmap. The interview agent is the first step in that system.
+## The production-shaped architecture
 
-The agent asks about the work people repeat, how long it takes, which tools it touches, what makes it difficult, where it waits, how people already use AI, and which decisions must stay human. Every roadmap number comes from that record.
+The graph has separate agent roles because each role has a different failure mode. A single prompt cannot reliably choose a statistically defensible sample, conduct an unbiased interview, preserve quotes, detect weak evidence, and make a high-stakes roadmap decision.
 
-## Sampling policy
+```mermaid
+flowchart TD
+  A[Research lead\nSampling agent] --> B[Scope & consent agent]
+  B --> C1[Finance interviewer\none isolated session]
+  B --> C2[Operations interviewer\none isolated session]
+  B --> C3[Support interviewer\none isolated session]
+  B --> C4[More sampled employees\nparallel sessions]
+  C1 --> D[Evidence analyst\nclaims + source quotes]
+  C2 --> D
+  C3 --> D
+  C4 --> D
+  D --> E[Quality & bias auditor]
+  E -->|missing or vague evidence| C1
+  E --> F[Team synthesis agents]
+  F --> G[Company research lead\ncompany process graph]
+  G --> H[Roadmap decision agent]
+  H --> I[Human owner approves roadmap]
+```
 
-The workspace uses a proportional sample per team. The first prototype uses a finite-population approximation for a 95% confidence level and roughly ±10% precision:
+`src/lib/engine/research-graph.ts` is the typed orchestration contract. The browser diagram is generated from the same node definitions and current records. `POST /api/research/graph` exposes the snapshot at a server boundary so it can later be moved to a queue or durable worker without changing the contract.
+
+## Node contracts and gates
+
+| Node | Agent responsibility | Input | Output | Gate |
+| --- | --- | --- | --- | --- |
+| Sample the company | Choose proportional team quotas and an invite wave | Roster, team sizes, precision target | Team targets and sampling progress | Every team has a target; no team is silently omitted |
+| Set scope and consent | Explain collection scope and flag sensitive topics | Participant and company context | Approved session scope | Participation scope is explicit before synthesis |
+| Interview employees | Run one bounded adaptive conversation per sampled employee | Role, team, prior answers | Transcript and structured work record | Work, time, tools, friction, waits, AI, and human judgment are covered |
+| Extract evidence | Convert answers to claims without losing source text | Transcript and submitted record | Evidence objects linked to the source answer | Every claim has a source; inferences are marked |
+| Audit quality and bias | Find vague answers, contradictions, missing fields, and coverage gaps | Evidence and sample progress | Score, risk flags, follow-up queue | Weak evidence loops back or goes to human review |
+| Synthesize each team | Group repeated tasks and handoffs while retaining exceptions | Quality-passed evidence | Team maps and confidence | Repeated themes are separated from single-person signals |
+| Build the company brain | Connect cross-team processes, dependencies, tools, and policies | Team maps and handoffs | Company graph and opportunity candidates | Each opportunity names teams, evidence, risk, owner, and unknowns |
+| Prioritize roadmap | Estimate value and effort after evidence is visible | Opportunities, ROI assumptions, human review | Prioritized roadmap and experiments | Evidence, confidence, owner, and human approval are present |
+
+## What matters in an employee interview
+
+The agent should ask for a recent concrete example instead of accepting general sentiment. It should capture the unit of work, frequency, time, systems touched, handoff, failure mode, consequence, current workaround, existing AI behavior, and the human boundary. It should ask the same core dimensions across teams so records can be compared, then use conditional probes for the employee's actual work.
+
+The interview state machine in `src/lib/engine/interview.ts` enforces the safe order:
+
+```mermaid
+stateDiagram-v2
+  [*] --> Context
+  Context --> WorkInventory
+  WorkInventory --> TaskDetail
+  TaskDetail --> Friction
+  Friction --> ConcreteExample: vague or short
+  ConcreteExample --> TaskDetail
+  Friction --> Handoffs: usable evidence
+  Handoffs --> AIToday
+  AIToday --> HumanBoundary
+  HumanBoundary --> EmployeeReview
+  EmployeeReview --> [*]
+```
+
+The server-side Jev router can choose only among allowed transitions (`continue`, `probe`, or `clarify`). It cannot skip a required probe or create an unapproved action. When `JEV_API_KEY` is absent or the model fails, the deterministic graph continues and labels the session as local guardrails.
+
+## Sampling criteria
+
+The first policy uses the finite-population approximation for a 95% confidence level and roughly ±10% precision:
 
 ```text
 sample = population / (1 + population × margin_of_error²)
 ```
 
-The result is rounded up and each team receives a minimum of three people when its population allows it. This is a discovery starting point, not a replacement for a statistician when a company needs a formally powered study. The UI shows the target, current coverage, remaining invites, employee time required, and the opportunity cost of that time using the workspace hourly-cost assumption.
+The result is rounded up, allocated proportionally, and each team receives a minimum of three people when its population allows it. This is a discovery starting point. A formal employee study should replace the margin and minimums with a statistician-approved design, account for response bias, and stratify further when job families or locations materially differ.
 
-## Agent graph
+The system must not silently treat the sample as representative. The quality auditor should report: team coverage, completion rate, invitation non-response, missing consent, synthetic data, evidence completeness, specificity, traceability, and minority or outlier signals.
 
-```mermaid
-flowchart LR
-  A[Context] --> B[Task inventory]
-  B --> C[Task detail]
-  C --> D[Friction]
-  D -->|short or vague answer| D2[Concrete example probe]
-  D2 --> C
-  D --> E[Handoffs]
-  E --> F[AI today]
-  F --> G[Human boundary]
-  G --> H[Employee review]
-  H --> I[Structured work map]
+## Evidence quality
+
+An interview is evidence-ready only when it has enough coverage, a concrete example, traceable source answers, and no unresolved risk flag. The implementation computes completeness, specificity, traceability, a combined score, missing fields, and risk flags. A record with no explicit consent or no transcript remains in review even if its fields are filled.
+
+The evidence contract should eventually persist objects like:
+
+```text
+Evidence {
+  id, interview_id, team, field, claim, source_quote,
+  question_id, confidence, kind: observed|reported|inferred,
+  review_status: pending|accepted|rejected
+}
 ```
 
-The product implements this graph as a small typed state machine in `src/lib/engine/interview.ts`, with a server-side model router in `src/lib/ai/interview-agent.ts`. The state machine defines the allowed transitions and required evidence. Jev receives the current node, the employee answer, the task context, and the safe next transition, then chooses whether the agent should continue, probe, or clarify. The browser never receives the API key.
+Synthesis can only consume accepted evidence. A claim such as “invoice matching is a good automation candidate” must point back to the employee answers that establish the task, time, failure mode, and human boundary.
 
-## Company research graph
+## Live boundary in this repository
 
-Discovery is a multi-session research system rather than one giant chat. A research lead sets the sample and invite wave. Each sampled employee gets an isolated interview session with the same evidence contract, and those sessions can run in parallel. A consolidation layer groups the structured records by team and process, preserving the source quote beside every task and hour. Jev then evaluates the company-level opportunities.
+The Discovery browser flow is a real adaptive interviewer: it sends each answer to `/api/interview/next`, and Jev routes the next safe move when `JEV_API_KEY` is configured. The graph, quality auditor, sampling planner, and server research snapshot are implemented and operate on the interview records.
 
-```mermaid
-flowchart LR
-  A[Research lead\nSample + invite] --> B1[Finance interview agent]
-  A --> B2[Operations interview agent]
-  A --> B3[Support interview agent]
-  A --> B4[More teams...]
-  B1 --> C[Evidence layer\nquotes · tasks · hours · tools]
-  B2 --> C
-  B3 --> C
-  B4 --> C
-  C --> D[Company brain\npatterns across teams]
-  D --> E[Jev roadmap\nsolution + readiness + ROI inputs]
-```
+The repository still uses local Zustand persistence and seeded Northwind records for the demo. Those records are deliberately marked synthetic and the roadmap node stays in review until a real workspace is used. Email/SMS delivery, SSO, consent storage, audio transcription, a durable database, background queues, and a production model provider are transport and operations layers that must be added before sending this to a real employee population.
 
-The prototype renders this graph in Discovery so a reviewer can see the orchestration boundary. The current browser implementation uses one reusable interview agent per session; it does not create a separate codebase or prompt for every team.
+## Boundaries
 
-## Agent capabilities
-
-- Adaptive prompts driven by the current node and the task being discussed.
-- A server-side Jev turn router that chooses among safe next moves when `JEV_API_KEY` is configured.
-- Follow-up questions when a friction answer is too short to support a decision.
-- Structured extraction of task names, hours, tools, pain, waits, AI use, and human boundaries.
-- Employee review before submission.
-- Optional Jev classification after the interview. Low-confidence classifications keep the rule-based answer and remain visible for review.
-
-## What is live in the prototype
-
-The browser chat in Discovery is a working agent. A person can be invited, start the agent, answer in natural language, continue an incomplete interview, edit captured tasks, and submit the reviewed record. With `JEV_API_KEY`, each answer also goes through the real server-side model router; without it, the same guarded graph runs locally and labels the session as fallback. The sample planner prepares the next wave and produces an invite brief.
-
-Email, SMS, SSO, consent management, audio transcription, and durable multi-tenant storage are deliberately separate transport and operations layers. They should be integrated after the question flow is validated with real participants.
-
-## Safety and review boundaries
-
-The agent does not promise savings to the employee, decide that a person should be replaced, or execute an automation. Jev can route interview turns and prioritize opportunities, but it cannot leave the allowed graph or skip review. A company owner reviews the final roadmap, and low-confidence judgments stay on the rule-based answer.
+- The interviewer does not promise savings, evaluate employee performance, or decide that a person should be replaced.
+- Sensitive personal data is out of scope unless the company explicitly defines a lawful collection purpose and retention policy.
+- The model may select a safe question or classification; it may not skip a gate or execute an automation.
+- Employees review and correct their record before synthesis.
+- A company owner approves the roadmap after evidence, risk, and ROI assumptions are visible.

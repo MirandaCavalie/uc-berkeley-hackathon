@@ -117,7 +117,7 @@ export function InterviewSystem({ interviews }: { interviews: Interview[] }) {
           </p>
         </Card>
       </div>
-      <AgentGraph plan={plan} />
+      <AgentGraph interviews={interviews} />
     </section>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { ArrowLeft, ArrowUp, Check, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowUp, Check, ShieldCheck, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button, Card, Input } from "@/components/ui";
@@ -23,6 +23,7 @@ export function InterviewRunner({ interview, onClose }: { interview: Interview; 
   const [submitting, setSubmitting] = useState(false);
   const [agentThinking, setAgentThinking] = useState(false);
   const [agentMode, setAgentMode] = useState<"model" | "local">("local");
+  const [scopeAccepted, setScopeAccepted] = useState(interview.consent?.status === "accepted");
   const bottom = useRef<HTMLDivElement>(null);
   const iv = state.interview;
   const prompt = promptFor(state, company);
@@ -104,15 +105,26 @@ export function InterviewRunner({ interview, onClose }: { interview: Interview; 
         </div>
       </div>
 
-      <div className="space-y-3">
-        {iv.transcript.map((m, i) => (
-          <Bubble key={i} from={m.from} text={m.text} />
-        ))}
-        {!readOnly && <Bubble from="ai" text={prompt} live />}
-        <div ref={bottom} />
-      </div>
+      {!readOnly && !scopeAccepted ? (
+        <ScopeGate
+          onAccept={() => {
+            const updated = { ...iv, consent: { status: "accepted" as const, acceptedAt: new Date().toISOString() } };
+            setState({ ...state, interview: updated });
+            saveInterview(updated);
+            setScopeAccepted(true);
+          }}
+        />
+      ) : (
+        <>
+          <div className="space-y-3">
+            {iv.transcript.map((m, i) => (
+              <Bubble key={i} from={m.from} text={m.text} />
+            ))}
+            {!readOnly && <Bubble from="ai" text={prompt} live />}
+            <div ref={bottom} />
+          </div>
 
-      {state.step !== "review" ? (
+          {state.step !== "review" ? (
         <div className="sticky bottom-4 mt-5">
           <Card className="flex items-end gap-2 p-2">
             <textarea
@@ -133,7 +145,7 @@ export function InterviewRunner({ interview, onClose }: { interview: Interview; 
           </Card>
           <div className="mt-1.5 px-1 text-[11.5px] text-faint">Enter to send · Shift+Enter for a new line</div>
         </div>
-      ) : (
+          ) : (
         <Captured
           interview={iv}
           readOnly={readOnly}
@@ -146,8 +158,26 @@ export function InterviewRunner({ interview, onClose }: { interview: Interview; 
             </Button>
           )}
         </Captured>
+          )}
+        </>
       )}
     </div>
+  );
+}
+
+function ScopeGate({ onAccept }: { onAccept: () => void }) {
+  return (
+    <Card className="mt-8 border border-accent/15 bg-accent-soft/40 p-5 sm:p-6">
+      <div className="flex items-start gap-3">
+        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent text-white"><ShieldCheck className="size-4" /></span>
+        <div>
+          <h2 className="text-[15px] font-semibold">Before we start</h2>
+          <p className="mt-1 text-[13px] leading-relaxed text-ink-2">This conversation captures how work happens: recurring tasks, time, tools, blockers, AI use, and what should stay human. Do not include passwords, customer data, health information, or other sensitive personal details.</p>
+          <p className="mt-2 text-[12px] leading-relaxed text-muted">You can stop or correct the record before it is submitted to the company research team.</p>
+          <Button className="mt-4" variant="accent" onClick={onAccept}>I understand — start interview</Button>
+        </div>
+      </div>
+    </Card>
   );
 }
 
