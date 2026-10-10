@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowUp, Check, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button, Card, Input } from "@/components/ui";
-import { judgeTasks } from "@/lib/client";
+import { interviewTurn, judgeTasks } from "@/lib/client";
 import { answer, effectiveProcess, promptFor, replay, type RunnerState } from "@/lib/engine/interview";
 import { currentAgentNode, evidenceCoverage, INTERVIEW_AGENT, nodeMeta } from "@/lib/engine/interview-agent";
 import { OTHER, processes } from "@/lib/engine/processes";
@@ -21,6 +21,8 @@ export function InterviewRunner({ interview, onClose }: { interview: Interview; 
   const [state, setState] = useState<RunnerState>(() => (readOnly ? { step: "review", taskIndex: 0, interview } : replay(interview)));
   const [draft, setDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [agentThinking, setAgentThinking] = useState(false);
+  const [agentMode, setAgentMode] = useState<"model" | "local">("local");
   const bottom = useRef<HTMLDivElement>(null);
   const iv = state.interview;
   const prompt = promptFor(state, company);
@@ -33,15 +35,32 @@ export function InterviewRunner({ interview, onClose }: { interview: Interview; 
     bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [iv.transcript.length, state.step]);
 
-  function send() {
+  async function send() {
     const text = draft.trim();
-    if (!text) return;
-    const next = answer(state, text);
+    if (!text || agentThinking) return;
+    setAgentThinking(true);
+    setDraft("");
+    const deterministicNext = answer(state, text);
+    const decision = await interviewTurn({
+      step: state.step,
+      taskName: iv.tasks[state.taskIndex]?.name ?? null,
+      currentTaskPain: iv.tasks[state.taskIndex]?.pain ?? "",
+      answer: text,
+      deterministicNextStep: deterministicNext.step,
+      deterministicNextTask: deterministicNext.interview.tasks[deterministicNext.taskIndex]?.name ?? null,
+    }).catch(() => null);
+    const next =
+      decision?.action === "probe" && state.step === "pain"
+        ? { ...deterministicNext, step: "painProbe" as const }
+        : decision?.action === "clarify" && state.step === "hours"
+          ? { ...deterministicNext, step: "hoursProbe" as const }
+          : deterministicNext;
+    if (decision) setAgentMode(decision.mode);
     const transcript = [...iv.transcript, { from: "ai" as const, text: prompt }, { from: "person" as const, text }];
     const updated: Interview = { ...next.interview, transcript, status: "in-progress" };
     setState({ ...next, interview: updated });
     saveInterview(updated);
-    setDraft("");
+    setAgentThinking(false);
   }
 
   function editTask(id: string, patch: Partial<InterviewTask>) {
@@ -66,7 +85,7 @@ export function InterviewRunner({ interview, onClose }: { interview: Interview; 
         </button>
         <div className="flex items-center gap-3 text-[12px] text-muted">
           <span className="hidden rounded-md bg-accent-soft px-2 py-1 font-medium text-accent sm:inline-flex">
-            {INTERVIEW_AGENT.name} · {node.label}
+            {INTERVIEW_AGENT.name} · {node.label} · {agentMode === "model" ? "model route" : "guardrails"}
           </span>
           <div className="h-1 w-28 overflow-hidden rounded-full bg-sunken">
             <div
@@ -110,7 +129,7 @@ export function InterviewRunner({ interview, onClose }: { interview: Interview; 
               placeholder={state.step === "tasks" ? "One task per line" : "Type your answer"}
               className="flex-1 resize-none bg-transparent px-2 py-1.5 text-[14px] leading-relaxed outline-none placeholder:text-faint"
             />
-            <Button variant="accent" onClick={send} disabled={!draft.trim()} aria-label="Send" icon={<ArrowUp className="size-4" />} />
+            <Button variant="accent" onClick={send} loading={agentThinking} disabled={!draft.trim()} aria-label="Send" icon={<ArrowUp className="size-4" />} />
           </Card>
           <div className="mt-1.5 px-1 text-[11.5px] text-faint">Enter to send · Shift+Enter for a new line</div>
         </div>

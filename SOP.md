@@ -19,7 +19,7 @@ Build a small state-machine agent for the prototype because the interview questi
 
 ## Entradas y salidas
 
-- Entrada: company context, team populations, employee name/role/team, and free-text answers in the browser.
+- Entrada: company context, team populations, employee name/role/team, and free-text answers in the browser. When configured, each answer is sent from the server to Jev with the current interview node and safe transition candidates.
 - Salida: an `Interview` record with transcript, tasks, hours, tools, friction, waits, AI use, human boundaries, and satisfaction; the Discovery work map; a sample time/cost estimate; and an optional Jev judgment report.
 
 ## Casos límite conocidos
@@ -28,7 +28,7 @@ Build a small state-machine agent for the prototype because the interview questi
 - Unrecognized task language remains in `Other` until a person or Jev classifies it.
 - A workspace without team populations infers a proportional roster from the people already invited.
 - The sample planner is a practical discovery estimate, not a formal research-power calculation for regulated studies.
-- Email, SMS, audio, consent, SSO, and persistent server storage are not connected yet.
+- If `JEV_API_KEY` is absent, the interview uses local evidence guardrails and clearly reports that mode. Email, SMS, audio, consent, SSO, and persistent server storage are not connected yet.
 
 ## Umbral de aprobación humana
 

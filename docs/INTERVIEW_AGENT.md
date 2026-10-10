@@ -32,11 +32,12 @@ flowchart LR
   H --> I[Structured work map]
 ```
 
-The product implements this graph as a small typed state machine in `src/lib/engine/interview.ts`. That keeps the demo deterministic, inspectable, and usable without an API key. The agent is still adaptive: short pain descriptions receive a follow-up, tools are extracted from free text, and each task is classified before it enters the work map.
+The product implements this graph as a small typed state machine in `src/lib/engine/interview.ts`, with a server-side model router in `src/lib/ai/interview-agent.ts`. The state machine defines the allowed transitions and required evidence. Jev receives the current node, the employee answer, the task context, and the safe next transition, then chooses whether the agent should continue, probe, or clarify. The browser never receives the API key.
 
 ## Agent capabilities
 
 - Adaptive prompts driven by the current node and the task being discussed.
+- A server-side Jev turn router that chooses among safe next moves when `JEV_API_KEY` is configured.
 - Follow-up questions when a friction answer is too short to support a decision.
 - Structured extraction of task names, hours, tools, pain, waits, AI use, and human boundaries.
 - Employee review before submission.
@@ -44,10 +45,10 @@ The product implements this graph as a small typed state machine in `src/lib/eng
 
 ## What is live in the prototype
 
-The browser chat in Discovery is a working agent. A person can be invited, start the agent, answer in natural language, continue an incomplete interview, edit captured tasks, and submit the reviewed record. The sample planner prepares the next wave and produces an invite brief.
+The browser chat in Discovery is a working agent. A person can be invited, start the agent, answer in natural language, continue an incomplete interview, edit captured tasks, and submit the reviewed record. With `JEV_API_KEY`, each answer also goes through the real server-side model router; without it, the same guarded graph runs locally and labels the session as fallback. The sample planner prepares the next wave and produces an invite brief.
 
 Email, SMS, SSO, consent management, audio transcription, and durable multi-tenant storage are deliberately separate transport and operations layers. They should be integrated after the question flow is validated with real participants.
 
 ## Safety and review boundaries
 
-The agent does not promise savings to the employee, decide that a person should be replaced, or execute an automation. Jev only prioritizes opportunities after discovery. A company owner reviews the final roadmap, and low-confidence judgments stay on the rule-based answer.
+The agent does not promise savings to the employee, decide that a person should be replaced, or execute an automation. Jev can route interview turns and prioritize opportunities, but it cannot leave the allowed graph or skip review. A company owner reviews the final roadmap, and low-confidence judgments stay on the rule-based answer.
