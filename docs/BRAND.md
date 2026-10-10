@@ -29,7 +29,7 @@ Plain, specific, calm. We sound like a good researcher, not a hype deck.
 
 | Token | Hex | Use |
 | --- | --- | --- |
-| Field green | `#1E5A40` | Primary actions, the logo, headings on dark |
+| Field purple | `#6D45D9` | Primary actions, the logo, headings on dark |
 | Signal amber | `#E9A23B` | What we found: highlights, the dot in the logo |
 | Paper | `#F4F2EC` | Background |
 | Ink | `#13140F` | Text |
@@ -40,8 +40,8 @@ Plain, specific, calm. We sound like a good researcher, not a hype deck.
 
 **Logo:** a geometric F with soft corners and an amber full stop. Discovery that ends in a finding. The same full stop closes the tagline on the landing page.
 
-- `Mark`: green F, amber dot. Use on light backgrounds; `inverted` for dark.
-- `Logo`: white F on a green rounded tile. App icon, favicon, interviewer avatar.
+- `Mark`: purple F, amber dot. Use on light backgrounds; `inverted` for dark.
+- `Logo`: white F on a purple rounded tile. App icon, favicon, interviewer avatar.
 - `Wordmark`: mark plus "Fieldwork" in Geist semibold, tight tracking (-0.04em). Text height is 0.72 of the mark size.
 - Clear space: half the mark size on every side. Never recolor the dot, outline the mark, or set the name in another typeface.
 

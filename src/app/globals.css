@@ -13,10 +13,10 @@
   --color-line: rgb(19 20 15 / 0.08);
   --color-line-strong: rgb(19 20 15 / 0.14);
 
-  /* Fieldwork green: the field. Signal amber: what we found in it. */
-  --color-accent: #1e5a40;
-  --color-accent-2: #164631;
-  --color-accent-soft: #e2eee6;
+  /* Fieldwork purple: the field. Signal amber: what we found in it. */
+  --color-accent: #6d45d9;
+  --color-accent-2: #5432b1;
+  --color-accent-soft: #efe9fc;
   --color-signal: #e9a23b;
   --color-signal-soft: #fcf0dc;
 

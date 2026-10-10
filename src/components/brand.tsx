@@ -5,7 +5,7 @@ export const BRAND = {
   tagline: "Find where AI actually helps.",
   pitch:
     "Fieldwork interviews every employee, maps how work really gets done, and turns it into an AI roadmap: what becomes an automation, an AI skill, or an agent, and what stays human.",
-  green: "#1E5A40",
+  purple: "#6D45D9",
   amber: "#E9A23B",
   ink: "#13140F",
   paper: "#F4F2EC",
@@ -27,7 +27,7 @@ export function Mark({ size = 24, inverted, className }: { size?: number; invert
   );
 }
 
-/** The app icon: the mark on a field-green tile. */
+/** The app icon: the mark on a field-purple tile. */
 export function Logo({ size = 28, className }: { size?: number; className?: string }) {
   return (
     <svg viewBox="0 0 32 32" width={size} height={size} className={clsx("shrink-0", className)} aria-hidden>

@@ -23,7 +23,7 @@ export default function OpengraphImage() {
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 80, background: BRAND.paper, fontFamily: "Geist" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
           <svg viewBox="0 0 32 32" width={64} height={64}>
-            <path d={MARK_F} fill={BRAND.green} />
+            <path d={MARK_F} fill={BRAND.purple} />
             <circle cx={MARK_DOT.cx} cy={MARK_DOT.cy} r={MARK_DOT.r} fill={BRAND.amber} />
           </svg>
           <div style={{ fontSize: 46, fontWeight: 600, letterSpacing: -1.8, color: BRAND.ink }}>{BRAND.name}</div>

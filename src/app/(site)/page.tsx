@@ -65,7 +65,7 @@ export default function Landing() {
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               href="/discovery"
-              className="pressable inline-flex h-11 items-center gap-2 rounded-lg bg-accent px-5 text-[14.5px] font-medium text-white shadow-[0_1px_2px_rgb(30_90_64/0.35)] hover:bg-accent-2"
+              className="pressable inline-flex h-11 items-center gap-2 rounded-lg bg-accent px-5 text-[14.5px] font-medium text-white shadow-[0_1px_2px_rgb(109_69_217/0.35)] hover:bg-accent-2"
             >
               See it with a real company <ArrowRight className="size-4" />
             </Link>

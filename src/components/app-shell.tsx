@@ -123,7 +123,7 @@ export function NextStep({ href, label }: { href: string; label: ReactNode }) {
   return (
     <Link
       href={href}
-      className="pressable inline-flex h-9 items-center gap-1.5 rounded-lg bg-accent px-3.5 text-[13.5px] font-medium text-white shadow-[0_1px_2px_rgb(30_90_64/0.35)] hover:bg-accent-2"
+      className="pressable inline-flex h-9 items-center gap-1.5 rounded-lg bg-accent px-3.5 text-[13.5px] font-medium text-white shadow-[0_1px_2px_rgb(109_69_217/0.35)] hover:bg-accent-2"
     >
       {label}
     </Link>

@@ -10,7 +10,7 @@ type ButtonVariant = "primary" | "secondary" | "ghost" | "accent" | "danger";
 
 const buttonVariants: Record<ButtonVariant, string> = {
   primary: "bg-ink text-white hover:bg-ink-2 shadow-[0_1px_0_rgb(255_255_255/0.1)_inset,0_1px_2px_rgb(0_0_0/0.2)]",
-  accent: "bg-accent text-white hover:bg-accent-2 shadow-[0_1px_0_rgb(255_255_255/0.15)_inset,0_1px_2px_rgb(30_90_64/0.35)]",
+  accent: "bg-accent text-white hover:bg-accent-2 shadow-[0_1px_0_rgb(255_255_255/0.15)_inset,0_1px_2px_rgb(109_69_217/0.35)]",
   secondary: "bg-surface text-ink shadow-card hover:bg-[#fbfaf7]",
   ghost: "text-ink-2 hover:bg-sunken",
   danger: "text-bad hover:bg-bad-soft",
