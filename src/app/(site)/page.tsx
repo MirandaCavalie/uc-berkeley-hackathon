@@ -1,4 +1,5 @@
 import { ArrowRight, Check, MessagesSquare, Quote, Scale, Map as MapIcon } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { BRAND, Logo, Wordmark } from "@/components/brand";
 import { solutionMeta } from "@/lib/engine/processes";
@@ -28,19 +29,26 @@ const week = [
 export default function Landing() {
   return (
     <div className="min-h-screen bg-paper">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <Wordmark size={30} />
-        <nav className="flex items-center gap-1 text-[13.5px]">
-          <a href="#how" className="hidden rounded-lg px-3 py-1.5 text-ink-2 hover:bg-sunken sm:block">
-            How it works
-          </a>
-          <a href="#types" className="hidden rounded-lg px-3 py-1.5 text-ink-2 hover:bg-sunken sm:block">
-            What we recommend
-          </a>
-          <Link href="/discovery" className="pressable ml-2 inline-flex h-9 items-center gap-1.5 rounded-lg bg-ink px-3.5 font-medium text-white hover:bg-ink-2">
-            Open demo
+      <header className="sticky top-0 z-30 border-b border-line bg-paper/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
+          <Link href="/" aria-label="Fieldwork home">
+            <Wordmark size={28} />
           </Link>
-        </nav>
+          <nav className="flex items-center gap-1 text-[13.5px]">
+            <a href="#how" className="hidden rounded-lg px-3 py-1.5 text-ink-2 hover:bg-sunken sm:block">
+              How it works
+            </a>
+            <a href="#types" className="hidden rounded-lg px-3 py-1.5 text-ink-2 hover:bg-sunken sm:block">
+              What we recommend
+            </a>
+            <Link
+              href="/discovery"
+              className="pressable ml-2 inline-flex h-9 items-center gap-1.5 rounded-lg bg-ink px-3.5 font-medium text-white hover:bg-ink-2"
+            >
+              Open demo
+            </Link>
+          </nav>
+        </div>
       </header>
 
       <section className="mx-auto grid max-w-6xl items-center gap-12 px-6 pt-14 pb-20 lg:grid-cols-[1.1fr_1fr]">
@@ -49,7 +57,10 @@ export default function Landing() {
             <span className="size-1.5 rounded-full bg-signal" />
             AI discovery for companies that don&apos;t know where to start
           </div>
-          <h1 className="font-display text-[44px] leading-[1.05] text-ink sm:text-[58px]">{BRAND.tagline}</h1>
+          <h1 className="font-display text-[44px] leading-[1.03] tracking-[-0.035em] text-ink sm:text-[60px]">
+            {BRAND.tagline.slice(0, -1)}
+            <span className="text-signal">.</span>
+          </h1>
           <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-ink-2">{BRAND.pitch}</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
@@ -58,7 +69,10 @@ export default function Landing() {
             >
               See it with a real company <ArrowRight className="size-4" />
             </Link>
-            <Link href="/roadmap" className="pressable inline-flex h-11 items-center rounded-lg bg-surface px-5 text-[14.5px] font-medium shadow-card hover:bg-[#fbfaf7]">
+            <Link
+              href="/roadmap"
+              className="pressable inline-flex h-11 items-center rounded-lg bg-surface px-5 text-[14.5px] font-medium shadow-card hover:bg-[#fbfaf7]"
+            >
               View a sample roadmap
             </Link>
           </div>
@@ -71,6 +85,22 @@ export default function Landing() {
           </div>
         </div>
         <InterviewMock />
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 pb-20">
+        <div className="overflow-hidden rounded-2xl bg-surface shadow-raised ring-1 ring-line">
+          <div className="flex items-center gap-3 border-b border-line bg-paper/70 px-4 py-2.5">
+            <div className="flex gap-1.5">
+              <span className="size-2.5 rounded-full bg-line-strong" />
+              <span className="size-2.5 rounded-full bg-line-strong" />
+              <span className="size-2.5 rounded-full bg-line-strong" />
+            </div>
+            <div className="mx-auto rounded-md bg-surface px-3 py-0.5 text-[11.5px] text-muted shadow-card">app.fieldwork.ai/northwind/roadmap</div>
+            <div className="w-10" />
+          </div>
+          <Image src="/product/fieldwork-roadmap.png" alt="Northwind Freight's AI roadmap in Fieldwork" width={2880} height={1630}
+            sizes="(min-width: 1152px) 1104px, 100vw" className="h-auto w-full" priority />
+        </div>
       </section>
 
       <section className="border-y border-line bg-surface">
@@ -88,7 +118,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section id="how" className="mx-auto max-w-6xl px-6 py-20">
+      <section id="how" className="scroll-mt-16 mx-auto max-w-6xl px-6 py-20">
         <h2 className="font-display text-[32px] leading-tight">Two workflows, one roadmap</h2>
         <div className="mt-10 grid gap-4 md:grid-cols-3">
           {[
@@ -123,7 +153,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section id="types" className="bg-ink text-white">
+      <section id="types" className="scroll-mt-16 bg-ink text-white">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <h2 className="font-display text-[32px] leading-tight">Not everything should be an agent</h2>
           <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-white/65">
@@ -143,7 +173,9 @@ export default function Landing() {
 
       <section className="mx-auto max-w-6xl px-6 py-20">
         <h2 className="font-display text-[32px] leading-tight">One week from kickoff to roadmap</h2>
-        <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted">A traditional discovery project samples a few people over months. Fieldwork asks everyone in a week.</p>
+        <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted">
+          A traditional discovery project samples a few people over months. Fieldwork asks everyone in a week.
+        </p>
         <ol className="mt-10 grid gap-4 md:grid-cols-4">
           {week.map((w, i) => (
             <li key={w.day} className="relative rounded-2xl bg-surface p-5 shadow-card">
@@ -176,7 +208,9 @@ export default function Landing() {
         <div className="flex flex-col items-start justify-between gap-6 rounded-3xl bg-accent p-10 text-white md:flex-row md:items-center">
           <div>
             <div className="font-display text-[28px] leading-tight">See Northwind Freight&apos;s roadmap</div>
-            <p className="mt-2 max-w-lg text-[14.5px] text-white/75">10 employees, 6 teams, 37 recurring tasks. From interviews to a ranked AI roadmap in one sitting.</p>
+            <p className="mt-2 max-w-lg text-[14.5px] text-white/75">
+              10 employees, 6 teams, 37 recurring tasks. From interviews to a ranked AI roadmap in one sitting.
+            </p>
           </div>
           <Link
             href="/discovery"
@@ -188,8 +222,44 @@ export default function Landing() {
       </section>
 
       <footer className="border-t border-line">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-6 text-[12.5px] text-muted">
-          <Wordmark size={20} />
+        <div className="mx-auto grid max-w-6xl gap-10 px-6 py-12 md:grid-cols-[1.5fr_1fr_1fr]">
+          <div>
+            <Wordmark size={24} />
+            <p className="mt-3 max-w-xs text-[13px] leading-relaxed text-muted">{BRAND.tagline}</p>
+          </div>
+          {[
+            {
+              title: "Product",
+              links: [
+                ["Discovery", "/discovery"],
+                ["Opportunities", "/opportunities"],
+                ["Roadmap", "/roadmap"],
+              ],
+            },
+            {
+              title: "Learn",
+              links: [
+                ["How it works", "#how"],
+                ["What we recommend", "#types"],
+              ],
+            },
+          ].map((col) => (
+            <div key={col.title}>
+              <div className="text-[12px] font-medium text-faint">{col.title}</div>
+              <ul className="mt-3 space-y-2 text-[13.5px]">
+                {col.links.map(([label, href]) => (
+                  <li key={label}>
+                    <Link href={href} className="text-ink-2 hover:text-ink">
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-2 border-t border-line px-6 py-5 text-[12px] text-faint">
+          <span>© 2026 Fieldwork</span>
           <span>Built at the UC Berkeley AI Hackathon · Decisions by Jev</span>
         </div>
       </footer>

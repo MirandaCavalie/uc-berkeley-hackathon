@@ -38,7 +38,14 @@ Plain, specific, calm. We sound like a good researcher, not a hype deck.
 | AI agent | `#6D45D9` | Solution type |
 | Keep human | `#C03D68` | Solution type |
 
-**Logo:** three furrows of a field and one amber dot, the spot worth digging. Component: `Logo` and `Wordmark` in `src/components/brand.tsx`.
+**Logo:** a geometric F with soft corners and an amber full stop. Discovery that ends in a finding. The same full stop closes the tagline on the landing page.
+
+- `Mark`: green F, amber dot. Use on light backgrounds; `inverted` for dark.
+- `Logo`: white F on a green rounded tile. App icon, favicon, interviewer avatar.
+- `Wordmark`: mark plus "Fieldwork" in Geist semibold, tight tracking (-0.04em). Text height is 0.72 of the mark size.
+- Clear space: half the mark size on every side. Never recolor the dot, outline the mark, or set the name in another typeface.
+
+Files: `src/components/brand.tsx`, `src/app/icon.svg`, `src/app/apple-icon.tsx`, `src/app/opengraph-image.tsx` (fonts in `src/assets/fonts`).
 
 **Type:** Geist, semibold with tight tracking for display, regular for text.
 

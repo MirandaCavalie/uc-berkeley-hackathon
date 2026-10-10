@@ -5,26 +5,46 @@ export const BRAND = {
   tagline: "Find where AI actually helps.",
   pitch:
     "Fieldwork interviews every employee, maps how work really gets done, and turns it into an AI roadmap: what becomes an automation, an AI skill, or an agent, and what stays human.",
+  green: "#1E5A40",
+  amber: "#E9A23B",
+  ink: "#13140F",
+  paper: "#F4F2EC",
 } as const;
 
-/** Furrows of a field, and the one spot worth digging. */
-export function Logo({ size = 28, className }: { size?: number; className?: string }) {
+/** An F with a full stop: discovery that ends in a finding. Drawn on a 32-unit grid. */
+export const MARK_F =
+  "M7.5 5h17a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5H12v2h8.5a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5H12v6.5a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 6 25.5v-19A1.5 1.5 0 0 1 7.5 5z";
+export const MARK_DOT = { cx: 17, cy: 24, r: 3 } as const;
+/** Places the mark optically centered inside a 32-unit tile. */
+export const TILE_TRANSFORM = "translate(4 3.6) scale(.75)";
+
+export function Mark({ size = 24, inverted, className }: { size?: number; inverted?: boolean; className?: string }) {
   return (
     <svg viewBox="0 0 32 32" width={size} height={size} className={clsx("shrink-0", className)} aria-hidden>
-      <rect width="32" height="32" rx="8" fill="var(--color-accent)" />
-      <path d="M6 12.5c3.3-2 6.7-2 10 0s6.7 2 10 0" fill="none" stroke="rgb(255 255 255 / 0.35)" strokeWidth="2" strokeLinecap="round" />
-      <path d="M6 18c3.3-2 6.7-2 10 0s6.7 2 10 0" fill="none" stroke="rgb(255 255 255 / 0.6)" strokeWidth="2" strokeLinecap="round" />
-      <path d="M6 23.5c3.3-2 6.7-2 10 0s6.7 2 10 0" fill="none" stroke="rgb(255 255 255 / 0.35)" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="21.5" cy="8" r="3" fill="var(--color-signal)" />
+      <path d={MARK_F} fill={inverted ? "white" : "var(--color-accent)"} />
+      <circle {...MARK_DOT} fill="var(--color-signal)" />
     </svg>
   );
 }
 
-export function Wordmark({ size = 28, className }: { size?: number; className?: string }) {
+/** The app icon: the mark on a field-green tile. */
+export function Logo({ size = 28, className }: { size?: number; className?: string }) {
   return (
-    <span className={clsx("inline-flex items-center gap-2", className)}>
-      <Logo size={size} />
-      <span className="font-semibold tracking-tight" style={{ fontSize: size * 0.6 }}>
+    <svg viewBox="0 0 32 32" width={size} height={size} className={clsx("shrink-0", className)} aria-hidden>
+      <rect width="32" height="32" rx="8" fill="var(--color-accent)" />
+      <g transform={TILE_TRANSFORM}>
+        <path d={MARK_F} fill="white" />
+        <circle {...MARK_DOT} fill="var(--color-signal)" />
+      </g>
+    </svg>
+  );
+}
+
+export function Wordmark({ size = 28, inverted, className }: { size?: number; inverted?: boolean; className?: string }) {
+  return (
+    <span className={clsx("inline-flex items-center", inverted ? "text-white" : "text-ink", className)} style={{ gap: size * 0.28 }}>
+      <Mark size={size} inverted={inverted} />
+      <span className="font-semibold tracking-[-0.04em]" style={{ fontSize: size * 0.72, lineHeight: 1 }}>
         {BRAND.name}
       </span>
     </span>
