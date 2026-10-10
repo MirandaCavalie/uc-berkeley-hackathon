@@ -1,15 +1,16 @@
 "use client";
 
 import clsx from "clsx";
-import { Check, ClipboardCopy, Copy, GitMerge, Pencil, Scale, Timer, X } from "lucide-react";
+import { Check, ClipboardCopy, Copy, GitMerge, Pencil, Scale, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Confidence, EngineStamp, HumanGate, useTask } from "@/components/shared";
 import { Badge, Button, Card, Field, Input, PageHeader, SectionTitle, Skeleton, Stat, Textarea } from "@/components/ui";
-import { formatDuration, stageBaseline } from "@/lib/baseline";
+import { formatDuration } from "@/lib/baseline";
 import type { ReviewComment, ReviewResult } from "@/lib/schemas";
 import { useStore } from "@/lib/store";
 import type { BrandKit, ReviewState } from "@/lib/types";
+import { LoopValue } from "./loop-value";
 
 const priorityTone = { must: "bad", should: "warn", could: "neutral" } as const;
 
@@ -63,6 +64,8 @@ export function ReviewView() {
         }
       />
 
+      <LoopValue />
+
       {showInput && (
         <Card className="enter mb-10 p-5">
           <div className="grid gap-4">
@@ -110,7 +113,6 @@ function ReviewResults({ review, brand }: { review: ReviewState; brand: BrandKit
   const decideReview = useStore((s) => s.decideReview);
   const resolveConflict = useStore((s) => s.resolveConflict);
   const approveReview = useStore((s) => s.approveReview);
-  const evidence = useStore((s) => s.evidence);
   const log = useStore((s) => s.log);
   const r = review.result;
 
@@ -118,8 +120,6 @@ function ReviewResults({ review, brand }: { review: ReviewState; brand: BrandKit
   const dupIds = new Set(r.duplicates.flatMap((d) => d.commentIds.slice(1)));
   const reviewers = new Set(r.comments.map((c) => c.author)).size;
   const channels = new Set(r.comments.map((c) => c.source)).size;
-  const baseline = stageBaseline(evidence, /consolidat/i);
-
   const decided = r.clusters.filter((c) => review.decisions[c.id] && review.decisions[c.id] !== "pending").length;
   const resolved = r.conflicts.filter((c) => review.conflictResolutions[c.id]).length;
   const markdown = buildBrief(review);
@@ -257,22 +257,6 @@ function ReviewResults({ review, brand }: { review: ReviewState; brand: BrandKit
 
         <aside className="lg:sticky lg:top-8">
           <BriefPreview review={review} markdown={markdown} onApprove={approve} />
-          <Card className="mt-4 p-4">
-            <div className="mb-2 flex items-center gap-1.5 text-[12.5px] font-medium">
-              <Timer className="size-3.5 text-accent" /> Pilot metric
-            </div>
-            <div className="space-y-1.5 text-[12.5px] text-ink-2">
-              <div className="flex justify-between gap-2">
-                <span className="text-muted">Baseline</span>
-                <span className="font-medium tabular-nums">{baseline ? `${baseline.days} days` : "Not in evidence"}</span>
-              </div>
-              <div className="flex justify-between gap-2">
-                <span className="text-muted">This round</span>
-                <span className="font-medium tabular-nums">{review.approvedAt ? formatDuration(Date.parse(review.approvedAt) - Date.parse(review.createdAt)) : "In progress"}</span>
-              </div>
-              {baseline && <p className="pt-1 text-[11.5px] text-faint">Source: approval timeline</p>}
-            </div>
-          </Card>
         </aside>
       </div>
     </div>

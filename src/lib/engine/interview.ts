@@ -90,7 +90,19 @@ export function parseTaskList(text: string): string[] {
     .slice(0, MAX_TASKS);
 }
 
-export type Phase = "intro" | "tasks" | "hours" | "hoursProbe" | "pain" | "waits" | "human" | "rating" | "review";
+export type Phase = "intro" | "tasks" | "hours" | "hoursProbe" | "pain" | "rounds" | "roundHours" | "waits" | "human" | "rating" | "review";
+
+/** Roles that live inside the feedback loop get the review-loop questions. */
+export const CREATIVE_ROLE = /design|creative|copy|art|production|social|brand|content|video/i;
+
+function parseRounds(text: string): number | null {
+  const words: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 };
+  const nums = [...text.toLowerCase().matchAll(/\b(\d+(?:\.\d+)?|one|two|three|four|five|six)\b/g)]
+    .map((m) => words[m[1]] ?? Number(m[1]))
+    .filter((n) => n > 0 && n <= 12)
+    .slice(0, 2);
+  return nums.length ? Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 10) / 10 : null;
+}
 
 export interface RunnerState {
   phase: Phase;
@@ -114,6 +126,10 @@ export function promptFor(state: RunnerState, company: string): string {
       return `Roughly: an hour, half a day, or a full day a week on “${task}”?`;
     case "pain":
       return `What makes “${task}” slow or frustrating?`;
+    case "rounds":
+      return "How many feedback rounds does a typical asset go through before it's approved?";
+    case "roundHours":
+      return "When a round of feedback comes in, how long does it take to turn it into one clear list of changes?";
     case "waits":
       return "Where does your work wait on someone else: feedback, approvals, handoffs?";
     case "human":
@@ -123,6 +139,26 @@ export function promptFor(state: RunnerState, company: string): string {
     case "review":
       return "Thanks. Here's what I captured. Fix anything that's off, then submit.";
   }
+}
+
+/** The same guide as plain text, for running the interview live on a call. */
+export function designerGuide(): string {
+  return [
+    "Designer interview: the feedback loop",
+    "",
+    "1. What's your part in a typical campaign?",
+    "2. Which tasks do you repeat every campaign?",
+    "3. For each task: about how long does it take in a typical week, and in which tools?",
+    "4. For each task: what makes it slow or frustrating?",
+    "5. How many feedback rounds does a typical asset go through before it's approved?",
+    "6. When a round of feedback comes in, how long does it take to turn it into one clear list of changes?",
+    "7. Tell me about the last time two reviewers, or a reviewer and the brand book, disagreed. What happened?",
+    "8. Where does your work wait on someone else: feedback, approvals, handoffs?",
+    "9. Which part of your work should never be automated?",
+    "10. If one revision round per campaign disappeared, what would you do with that time?",
+    "",
+    "Capture exact quotes. Type their answers into Interviews to add them to the findings.",
+  ].join("\n");
 }
 
 const uid = () => Math.random().toString(36).slice(2, 8);
@@ -153,7 +189,26 @@ export function answer(state: RunnerState, text: string): RunnerState {
     case "pain": {
       const refined = classifyTask(`${task.name} ${text}`);
       iv.tasks[state.taskIndex] = { ...task, pain: text, ...(task.stage === "Other" ? refined : {}) };
-      return state.taskIndex + 1 < iv.tasks.length ? at("hours", state.taskIndex + 1) : at("waits");
+      if (state.taskIndex + 1 < iv.tasks.length) return at("hours", state.taskIndex + 1);
+      return CREATIVE_ROLE.test(iv.role) ? at("rounds") : at("waits");
+    }
+    case "rounds":
+      iv.loop = { rounds: parseRounds(text), hoursPerRound: iv.loop?.hoursPerRound ?? null };
+      return at("roundHours");
+    case "roundHours": {
+      const t = text.toLowerCase();
+      const n = t.match(/(\d+(?:\.\d+)?)\s*(h|hours?|hrs?|min|minutes?|days?)\b/);
+      const hours = n
+        ? Number(n[1]) * (n[2].startsWith("min") ? 1 / 60 : n[2].startsWith("day") ? 8 : 1)
+        : /half (a )?day/.test(t)
+          ? 4
+          : /full day|whole day/.test(t)
+            ? 8
+            : /\ban hour\b|\bone hour\b/.test(t)
+              ? 1
+              : null;
+      iv.loop = { rounds: iv.loop?.rounds ?? null, hoursPerRound: hours != null ? Math.round(hours * 10) / 10 : null };
+      return at("waits");
     }
     case "waits":
       iv.waits = text;
@@ -177,7 +232,7 @@ export function replay(interview: Interview): RunnerState {
   let state: RunnerState = {
     phase: "intro",
     taskIndex: 0,
-    interview: { ...interview, tasks: [], context: "", waits: "", keepHuman: "", satisfaction: null },
+    interview: { ...interview, tasks: [], context: "", waits: "", keepHuman: "", satisfaction: null, loop: undefined },
   };
   for (const a of answers) state = answer(state, a);
   return state;

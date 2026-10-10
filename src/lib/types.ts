@@ -140,6 +140,7 @@ export interface Interview {
   waits: string;
   keepHuman: string;
   satisfaction: number | null;
+  loop?: { rounds: number | null; hoursPerRound: number | null };
 }
 
 export interface RoiAssumptions {

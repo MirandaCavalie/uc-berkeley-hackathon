@@ -1,14 +1,15 @@
 "use client";
 
 import clsx from "clsx";
-import { ArrowRight, ChevronDown, Radar, Trash2, UserPlus, Users } from "lucide-react";
+import { ArrowRight, ChevronDown, ClipboardList, Radar, Trash2, UserPlus, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Confidence } from "@/components/shared";
 import { Badge, Button, Card, Empty, Input, ModeBadge, PageHeader, SectionTitle, Stat } from "@/components/ui";
 import { judgeTasks } from "@/lib/client";
-import { effectiveMode, INTERVIEW_EVIDENCE_ID, interviewsToEvidence, summarize, type Finding } from "@/lib/engine/interview";
+import { designerGuide, effectiveMode, INTERVIEW_EVIDENCE_ID, interviewsToEvidence, summarize, type Finding } from "@/lib/engine/interview";
+import { loopBaseline } from "@/lib/engine/loop";
 import type { WorkMode } from "@/lib/schemas";
 import { useStore } from "@/lib/store";
 import type { Interview } from "@/lib/types";
@@ -47,15 +48,26 @@ export function InterviewsView() {
       <PageHeader
         title="Team Interviews"
         actions={
-          synced ? (
-            <Link href="/radar" className="pressable inline-flex h-9 items-center gap-1.5 rounded-lg bg-surface px-3.5 text-[13.5px] font-medium shadow-card hover:bg-[#fbfaf7]">
-              In Radar <ArrowRight className="size-3.5" />
-            </Link>
-          ) : (
-            <Button variant="accent" onClick={sendToRadar} disabled={!exported} icon={<Radar className="size-4" />}>
-              {inRadar ? "Update Radar" : "Send to Radar"}
+          <>
+            <Button
+              icon={<ClipboardList className="size-4" />}
+              onClick={() => {
+                navigator.clipboard?.writeText(designerGuide());
+                toast("Designer interview guide copied");
+              }}
+            >
+              Copy designer guide
             </Button>
-          )
+            {synced ? (
+              <Link href="/radar" className="pressable inline-flex h-9 items-center gap-1.5 rounded-lg bg-surface px-3.5 text-[13.5px] font-medium shadow-card hover:bg-[#fbfaf7]">
+                In Radar <ArrowRight className="size-3.5" />
+              </Link>
+            ) : (
+              <Button variant="accent" onClick={sendToRadar} disabled={!exported} icon={<Radar className="size-4" />}>
+                {inRadar ? "Update Radar" : "Send to Radar"}
+              </Button>
+            )}
+          </>
         }
       />
 
@@ -85,6 +97,8 @@ export function InterviewsView() {
             </Card>
           </section>
 
+          <LoopFromInterviews />
+
           <section className="mb-10">
             <SectionTitle title="Findings" meta={results.findings.length} />
             <div className="space-y-2">
@@ -104,6 +118,44 @@ export function InterviewsView() {
         <Assumptions />
       </section>
     </div>
+  );
+}
+
+function LoopFromInterviews() {
+  const evidence = useStore((s) => s.evidence);
+  const interviews = useStore((s) => s.interviews);
+  const b = loopBaseline(evidence, interviews);
+  if (!b.reporters.length && !b.quotes.length) return null;
+  return (
+    <section className="mb-10">
+      <SectionTitle
+        title="Feedback loop"
+        meta={b.reporters.length ? `${b.reporters.length} creatives` : undefined}
+        action={
+          <Link href="/review" className="inline-flex items-center gap-1 text-[13px] font-medium text-accent hover:underline">
+            Open Review Loop <ArrowRight className="size-3.5" />
+          </Link>
+        }
+      />
+      <Card className="grid gap-6 p-5 md:grid-cols-[1fr_1.4fr]">
+        <div className="grid grid-cols-2 gap-5">
+          <Stat label="Rounds per asset" value={b.reportedRounds ?? "—"} sub="self-reported" />
+          <Stat label="Hours per round" value={b.reportedHoursPerRound ?? "—"} sub="to one list of changes" />
+          <Stat label="Consolidating" value={b.consolidationHoursPerMonth != null ? `${b.consolidationHoursPerMonth} h/mo` : "—"} />
+          <Stat label="Waiting on feedback" value={b.waitingOnFeedback.length} sub={b.waitingOnFeedback.map((n) => n.split(" ")[0]).join(", ") || undefined} />
+        </div>
+        <div className="space-y-2">
+          {b.quotes.slice(0, 3).map((q, i) => (
+            <figure key={i} className="rounded-lg bg-sunken/60 px-3 py-2">
+              <blockquote className="text-[13px] leading-relaxed text-ink-2">“{q.text}”</blockquote>
+              <figcaption className="mt-0.5 text-[11.5px] text-muted">
+                {q.person}, {q.role}
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </Card>
+    </section>
   );
 }
 

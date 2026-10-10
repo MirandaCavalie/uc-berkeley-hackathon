@@ -9,24 +9,24 @@ import { Toaster, toast } from "sonner";
 import { useStore } from "@/lib/store";
 
 const nav = [
-  { section: null, items: [{ href: "/", label: "Overview", icon: Layers }] },
   {
-    section: "Discover",
+    section: null,
     items: [
+      { href: "/", label: "Overview", icon: Layers },
+      { href: "/review", label: "Review Loop", icon: MessagesSquare },
       { href: "/interviews", label: "Interviews", icon: Users },
-      { href: "/learn", label: "Learning", icon: Route },
-      { href: "/radar", label: "Radar", icon: Radar },
+      { href: "/brand", label: "Brand Kit", icon: SwatchBook },
     ],
   },
   {
-    section: "Workflows",
+    section: "Labs",
     items: [
-      { href: "/review", label: "Review Loop", icon: MessagesSquare },
+      { href: "/radar", label: "Radar", icon: Radar },
+      { href: "/learn", label: "Learning", icon: Route },
       { href: "/launch", label: "Campaign Launch", icon: Rocket },
       { href: "/studio", label: "Creative Studio", icon: Sparkles },
     ],
   },
-  { section: "Foundation", items: [{ href: "/brand", label: "Brand Kit", icon: SwatchBook }] },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {

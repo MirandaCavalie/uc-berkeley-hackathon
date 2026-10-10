@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button, Card, Input, ModeBadge } from "@/components/ui";
 import { judgeTasks } from "@/lib/client";
-import { answer, effectiveMode, promptFor, replay, taskStages, type RunnerState } from "@/lib/engine/interview";
+import { answer, CREATIVE_ROLE, effectiveMode, promptFor, replay, taskStages, type RunnerState } from "@/lib/engine/interview";
 import { useStore } from "@/lib/store";
 import type { Interview, InterviewTask } from "@/lib/types";
 import { Confidence } from "../shared";
@@ -25,7 +25,7 @@ export function InterviewRunner({ interview, onClose }: { interview: Interview; 
   const iv = state.interview;
   const prompt = promptFor(state, company);
   const answered = iv.transcript.filter((m) => m.from === "person").length;
-  const expected = 5 + Math.max(iv.tasks.length, 3) * 2;
+  const expected = 5 + Math.max(iv.tasks.length, 3) * 2 + (CREATIVE_ROLE.test(iv.role) ? 2 : 0);
 
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });

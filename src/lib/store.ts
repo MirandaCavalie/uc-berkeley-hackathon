@@ -202,6 +202,14 @@ export const useStore = create<State>()(
           drafts: { review: { assetName: "", feedback: "" }, launch: { brief: "", channels: seedLaunchInput.channels }, studio: { theme: "", constraints: "" } },
         }),
     }),
-    { name: "creativeops-radar", version: 1, skipHydration: true },
+    {
+      name: "creativeops-radar",
+      version: 2,
+      skipHydration: true,
+      migrate: (persisted, version) => {
+        const state = persisted as Partial<State>;
+        return version < 2 ? { ...state, interviews: seedInterviews } : state;
+      },
+    },
   ),
 );
