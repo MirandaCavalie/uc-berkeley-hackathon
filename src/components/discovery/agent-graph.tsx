@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowDown, ArrowRight, BadgeCheck, BrainCircuit, ClipboardCheck, Database, GitBranch, Network, SearchCheck, ShieldCheck, UsersRound } from "lucide-react";
+import { ArrowDown, ArrowRight, BadgeCheck, BrainCircuit, ChevronDown, ClipboardCheck, Database, GitBranch, Network, SearchCheck, ShieldCheck, UsersRound } from "lucide-react";
+import { useState } from "react";
 import { Badge, Card } from "@/components/ui";
 import { buildResearchRun } from "@/lib/engine/research-graph";
 import type { Interview, ResearchNodeSnapshot, ResearchNodeStatus } from "@/lib/types";
@@ -37,6 +38,7 @@ export function AgentGraph({ interviews }: { interviews: Interview[] }) {
   const workspace = useStore((state) => state.workspace);
   const run = buildResearchRun(workspace, interviews ?? []);
   const lowerNodes = run.nodes.slice(4);
+  const [showContracts, setShowContracts] = useState(false);
 
   return (
     <Card className="mt-4 overflow-hidden border border-accent/15 bg-[#fbfaff] p-5 sm:p-6">
@@ -65,9 +67,12 @@ export function AgentGraph({ interviews }: { interviews: Interview[] }) {
 
       <div className="mt-3 flex items-center gap-2 text-[11px] text-muted"><ArrowRight className="size-3 text-accent" /><span>Feedback edge: the quality auditor sends a targeted follow-up back to the interview session.</span></div>
 
-      <div className="mt-6 border-t border-line pt-5">
-        <div className="flex items-center gap-2"><ClipboardCheck className="size-4 text-accent" /><h4 className="text-[13px] font-semibold">What each agent must prove</h4></div>
-        <div className="mt-3 grid gap-2 lg:grid-cols-2">{run.nodes.map((node) => <ContractRow key={node.id} node={node} />)}</div>
+      <div className="mt-6 border-t border-line pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2"><ClipboardCheck className="size-4 text-accent" /><div><div className="text-[13px] font-semibold">Agent contracts</div><div className="text-[11px] text-muted">8 roles · 8 gates · 1 feedback loop</div></div></div>
+          <button type="button" onClick={() => setShowContracts((value) => !value)} className="pressable inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-accent hover:bg-accent-soft"><span>{showContracts ? "Hide criteria" : "Show criteria"}</span><ChevronDown className={`size-3.5 transition-transform ${showContracts ? "rotate-180" : ""}`} /></button>
+        </div>
+        {showContracts && <div className="mt-3 grid gap-2 lg:grid-cols-2">{run.nodes.map((node) => <ContractRow key={node.id} node={node} />)}</div>}
       </div>
     </Card>
   );
