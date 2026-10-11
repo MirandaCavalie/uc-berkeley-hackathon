@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, BookOpen, CalendarDays, Check, ChevronRight, Sparkles, Zap } from "lucide-react";
 import { useHydrated, useStore } from "@/lib/store";
@@ -12,28 +12,23 @@ import { MeetingBuilder } from "./meeting-builder";
 
 export const selectStyle = "w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-[13px] outline-accent";
 
-export function PersonalWorkspace() {
+export function PersonalWorkspace({ initialEmployee = "", calendarResult = "" }: { initialEmployee?: string; calendarResult?: string }) {
   const hydrated = useHydrated();
   const interviews = useStore((s) => s.interviews);
   const workspace = useStore((s) => s.workspace);
-  const [selected, setSelected] = useState("");
-  const [returning, setReturning] = useState(false);
-  useEffect(() => {
-    const query = new URLSearchParams(window.location.search);
-    setSelected(query.get("employee") || "");
-    setReturning(query.has("calendar"));
-  }, []);
+  const [selected, setSelected] = useState(initialEmployee);
+  const [returning, setReturning] = useState(Boolean(calendarResult));
   const people = interviews.filter((i) => i.status === "completed");
   const employee = people.find((i) => i.id === selected) ?? people.find((i) => i.name === "Ryan Park") ?? people[0];
   if (!hydrated) return <p className="text-muted">Loading your workspace…</p>;
   if (!employee) return <Empty icon={<BookOpen />} title="Your journey starts with a conversation" action={<Link href="/discovery" className="text-accent">Go to Discovery →</Link>}>Complete an employee interview to discover opportunities grounded in their work.</Empty>;
   return <>
     <PageHeader title="My work" actions={<label className="flex items-center gap-2 text-xs text-muted">Demo profile<select aria-label="Employee profile" className={selectStyle} value={employee.id} onChange={(e) => { setSelected(e.target.value); setReturning(false); window.history.replaceState(null, "", `/my-work?employee=${encodeURIComponent(e.target.value)}`); }}>{people.map((p) => <option key={p.id} value={p.id}>{p.name} · {p.role}</option>)}</select></label>} />
-    <EmployeeWork key={employee.id} employee={employee} workspace={workspace} returning={returning} />
+    <EmployeeWork key={employee.id} employee={employee} workspace={workspace} returning={returning} calendarResult={returning ? calendarResult : ""} />
   </>;
 }
 
-function EmployeeWork({ employee, workspace, returning }: { employee: Interview; workspace: Workspace; returning: boolean }) {
+function EmployeeWork({ employee, workspace, returning, calendarResult }: { employee: Interview; workspace: Workspace; returning: boolean; calendarResult: string }) {
   const allHelpers = useStore((s) => s.personalHelpers);
   const draft = useStore((s) => s.helperDrafts[employee.id]);
   const saveDraft = useStore((s) => s.saveHelperDraft);
@@ -47,7 +42,7 @@ function EmployeeWork({ employee, workspace, returning }: { employee: Interview;
     saveDraft(employee.id, next);
     setBuilding(true);
   }
-  if (building && draft) return <MeetingBuilder employee={employee} workspace={workspace} draft={draft} onClose={() => setBuilding(false)} onSaved={() => { setBuilding(false); setTab("My helpers"); }} />;
+  if (building && draft) return <MeetingBuilder employee={employee} workspace={workspace} draft={draft} calendarResult={calendarResult} onClose={() => setBuilding(false)} onSaved={() => { setBuilding(false); setTab("My helpers"); }} />;
   return <div className="enter space-y-7">
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div><div className="mb-2 flex items-center gap-2"><Badge tone="accent">Your AI journey</Badge>{workspace.synthetic && <Badge tone="warn">Sample interview</Badge>}</div><h2 className="font-display text-3xl tracking-tight">More space for your best work, {employee.name.split(" ")[0]}.</h2><p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">Turn what you shared in your interview into small, useful changes to your day. You choose what AI helps with and what stays with you.</p></div>

@@ -20,13 +20,13 @@ async function requestJson(url: string, init?: RequestInit) {
   return data;
 }
 
-export function MeetingBuilder({ employee, workspace, draft, onClose, onSaved }: { employee: Interview; workspace: Workspace; draft: HelperDraft; onClose: () => void; onSaved: () => void }) {
+export function MeetingBuilder({ employee, workspace, draft, calendarResult = "", onClose, onSaved }: { employee: Interview; workspace: Workspace; draft: HelperDraft; calendarResult?: string; onClose: () => void; onSaved: () => void }) {
   const saveDraft = useStore((s) => s.saveHelperDraft);
   const saveHelper = useStore((s) => s.savePersonalHelper);
   const helpers = useStore((s) => s.personalHelpers);
   const [status, setStatus] = useState<CalendarStatus | null>(null);
   const [statusError, setStatusError] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(calendarResult === "failed" ? "Google connection wasn’t completed. Your draft is saved. Try connecting again." : "");
   const [busy, setBusy] = useState(false);
   const [calendarBusy, setCalendarBusy] = useState(false);
   const [events, setEvents] = useState<Meeting[] | null>(null);
@@ -41,9 +41,7 @@ export function MeetingBuilder({ employee, workspace, draft, onClose, onSaved }:
     active.current = true;
     const controller = new AbortController();
     requestJson(`/api/integrations/google/status?employee=${encodeURIComponent(employee.id)}`, { signal: controller.signal }).then(setStatus).catch((e) => { if (!controller.signal.aborted) setStatusError(e.message); });
-    const callback = new URLSearchParams(window.location.search).get("calendar");
-    if (callback === "failed") setError("Google connection wasn’t completed. Your draft is saved. Try connecting again.");
-    if (callback) window.history.replaceState(null, "", `/my-work?employee=${encodeURIComponent(employee.id)}`);
+    if (new URLSearchParams(window.location.search).has("calendar")) window.history.replaceState(null, "", `/my-work?employee=${encodeURIComponent(employee.id)}`);
     return () => { active.current = false; controller.abort(); };
   }, [employee.id]);
   function update(next: Partial<HelperDraft>) { saveDraft(employee.id, { ...draft, ...next }); }
