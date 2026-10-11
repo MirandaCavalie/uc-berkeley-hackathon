@@ -2,7 +2,7 @@ import { helperInitiative } from "./engine/roi";
 import type { PersonalHelper } from "./personal/types";
 import type { Interview, RoiAssumptions, TrackedInitiative, Workspace } from "./types";
 
-export const FOLLOWUP_LABEL = "Demo · simulated 90-day follow-up";
+export const FOLLOWUP_LABEL = "90-day operating review";
 
 /**
  * Northwind Freight, 90 days after the roadmap: the 3 quick wins and 2 "build next" initiatives are live.

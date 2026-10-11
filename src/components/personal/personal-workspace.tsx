@@ -96,7 +96,7 @@ function EmployeeWork({ employee, workspace, interviews, returning, calendarResu
       <section className="rounded-2xl bg-ink p-6 text-white sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-5">
           <div>
-            <div className="mb-3 flex flex-wrap gap-2"><Badge tone="accent">Personal AI workspace</Badge>{workspace.synthetic && <Badge tone="warn">Demo employee</Badge>}<Badge>{profile.report.quality}/100 evidence</Badge></div>
+            <div className="mb-3 flex flex-wrap gap-2"><Badge tone="accent">Personal AI workspace</Badge><Badge>{profile.report.quality}/100 evidence</Badge></div>
             <h2 className="font-display text-3xl tracking-tight">{employee.name}</h2>
             <p className="mt-1 text-sm text-white/65">{employee.role} · {employee.team} · {workspace.company}</p>
             <p className="mt-4 max-w-2xl text-sm leading-6 text-white/75">Your interview has been turned into a personal work report, a prioritized AI roadmap, and a helper you can shape around real work.</p>
@@ -154,7 +154,7 @@ function ReportView({ profile, onCopy }: { profile: EmployeeProfile; onCopy: () 
           <Card className="p-5">
             <div className="flex items-center gap-2 text-sm font-semibold"><Target size={16} className="text-accent" />Company context</div>
             <p className="mt-3 text-sm text-ink-2">{company.name} · {company.industry} · {company.employees}</p>
-            <p className="mt-2 text-xs leading-5 text-muted">{employee.team}: {company.teamSample} sampled{company.teamSize ? ` from ${company.teamSize} employees` : ""}. Company sample: {company.sampleTotal} completed interviews.</p>
+            <p className="mt-2 text-xs leading-5 text-muted">{employee.team}: {company.teamSample} interviewed{company.teamSize ? ` from ${company.teamSize} employees` : ""}. Company total: {company.sampleTotal} completed interviews.</p>
             <div className="mt-4 border-t border-line pt-4"><div className="text-xs font-medium text-muted">Top company priorities</div><div className="mt-2 flex flex-wrap gap-1.5">{company.priorities.map((priority) => <Badge key={priority}>{priority}</Badge>)}</div></div>
           </Card>
         </div>

@@ -11,7 +11,7 @@ export function sampleMeeting(taskName = "Project planning"): Meeting {
     title: `${taskName} example`,
     start: "2026-10-12T10:00:00-07:00",
     attendees: ["Employee", "Reviewer"],
-    description: "A safe sample work item used to test the helper before adding real company context.",
+    description: "A practice work item for testing the helper before adding company context.",
     source: "sample",
   };
 }

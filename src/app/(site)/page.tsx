@@ -72,7 +72,7 @@ export default function Landing() {
               rel="noreferrer"
               className="pressable inline-flex h-11 items-center rounded-lg bg-surface px-5 text-[14.5px] font-medium shadow-card hover:bg-[#fbfaf7]"
             >
-              Watch the demo
+              Watch product tour
             </a>
           </div>
           <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-muted">
@@ -126,7 +126,7 @@ export default function Landing() {
               icon: MessagesSquare,
               step: "1",
               title: "Discovery",
-              body: "Sample each team, then run focused conversations about tasks, time, tools, friction, and human judgment.",
+              body: "Set coverage for each team, then run focused conversations about tasks, time, tools, friction, and human judgment.",
             },
             {
               icon: Scale,
@@ -174,7 +174,7 @@ export default function Landing() {
       <section className="mx-auto max-w-6xl px-6 py-20">
         <div className="eyebrow">The engagement</div>
         <h2 className="mt-3 font-display text-[32px] leading-tight">A week of useful evidence</h2>
-        <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted">A proportional sample keeps discovery focused. Every conversation makes the next decision clearer.</p>
+        <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted">Team-based coverage keeps discovery focused. Every conversation makes the next decision clearer.</p>
         <ol className="mt-10 grid gap-4 md:grid-cols-4">
           {week.map((w, i) => (
             <li key={w.day} className="relative rounded-2xl bg-surface p-5 shadow-card">

@@ -104,7 +104,7 @@ function InvestCard({ o, f, roi }: { o: Opportunity; f: OpportunityForecast; roi
 }
 
 function basisText(f: OpportunityForecast) {
-  if (f.basis === "sample") return "Sample only: no team roster to extrapolate from";
+  if (f.basis === "sample") return "Interview data only: add a team roster to estimate company-wide impact";
   return `Extrapolated from ${f.interviewed} of ${f.headcount.toLocaleString()} people${f.capped ? `, capped at ${MAX_EXTRAPOLATION}×` : ""}`;
 }
 
@@ -271,7 +271,7 @@ function HowWeForecast({ roi }: { roi: RoiAssumptions }) {
       <b>Reported hours</b> H: hours per week each interviewee spends on the process × 4.33.
     </>,
     <>
-      <b>Extrapolate to the team</b>: H × (team headcount ÷ people interviewed in that team), capped at {MAX_EXTRAPOLATION}×. No roster means sample only.
+      <b>Extrapolate to the team</b>: H × (team headcount ÷ people interviewed in that team), capped at {MAX_EXTRAPOLATION}×. Without a roster, the forecast uses interviewed employees only.
     </>,
     <>
       <b>Capture</b> by solution type: automation {pct(roi.capture.automation)}, agent {pct(roi.capture.agent)}, skill {pct(roi.capture.skill)}, kept human 0%.

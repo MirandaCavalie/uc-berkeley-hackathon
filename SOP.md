@@ -2,7 +2,7 @@
 
 ## Qué hace
 
-Fieldwork plans a proportional sample of employees, runs adaptive interviews, audits the evidence, and turns the results into a company roadmap. Every completed participant also receives a personal work report, a 90-day AI roadmap, and a reusable helper grounded in their own interview.
+Fieldwork sets team-based interview coverage, runs adaptive interviews, audits the evidence, and turns the results into a company roadmap. Every completed participant also receives a personal work report, a 90-day AI roadmap, and a reusable helper grounded in their own interview.
 
 ## Por qué se construyó así (build/buy/kill)
 
@@ -13,13 +13,13 @@ Build the Fieldwork research graph and personal-profile engine because the inter
 1. From the project directory, run `npm ci`.
 2. Start the local app with `npm run dev`.
 3. Open `http://localhost:3000/discovery`.
-4. Review the sample plan and copy the next invite brief.
+4. Review Interview coverage and copy the interview plan.
 5. Add a person under People, choose “Start agent”, accept the collection scope, answer the prompts, edit the captured record, and submit it.
-6. Read the control graph. A yellow Review node means evidence, consent, or coverage still needs attention; it is not a recommendation.
+6. Use the five-stage Interview workflow. Select a stage to inspect its inputs, output, review rule, and current progress. “Needs review” means evidence, consent, or coverage still needs attention.
 7. Continue to Opportunities when the work map has enough completed interviews.
 8. Open `http://localhost:3000/my-work`, select an employee, and review their Report and AI roadmap.
-9. Choose “Build this helper,” test it with the safe sample or approved work context, then save it under My helpers.
-10. Run `npm run check:demo`, `npm run check:roi`, `npm run lint`, and `npm run build` before changing or presenting the demo dataset.
+9. Choose “Build this helper,” test it with the practice context or approved work context, then save it under My helpers.
+10. Run `npm run check:demo`, `npm run check:roi`, `npm run lint`, `npx tsc --noEmit`, and `npm run build` before changing or presenting the workspace data.
 
 ## Entradas y salidas
 
@@ -32,10 +32,10 @@ Build the Fieldwork research graph and personal-profile engine because the inter
 - A new interview cannot start until the participant accepts the collection scope; records without that status stay in review.
 - Unrecognized task language remains in `Other` until a person or Jev classifies it.
 - A workspace without team populations infers a proportional roster from the people already invited.
-- The sample planner is a practical discovery estimate, not a formal research-power calculation for regulated studies.
+- The coverage planner is a practical discovery estimate, not a formal research-power calculation for regulated studies.
 - If `JEV_API_KEY` is absent, the interviewer uses local evidence guardrails and clearly reports that mode. The graph and quality audit still run deterministically. Email, SMS, audio, SSO, durable storage, and background queues are not connected yet.
 - If `OPENAI_API_KEY` is absent, the personal helper returns a local work brief. The employee report, roadmap, calculations, and helper configuration remain fully available.
-- Existing browser data may predate a seed-data correction. Use “Reset demo workspace” to reload deterministic task IDs and seeded consent records.
+- Existing browser data may predate a workspace-data correction. Use “Restore workspace” to reload deterministic task IDs and consent records.
 - Capacity is estimated from employee-reported time, capture rates, adoption assumptions, and loaded cost. It is not guaranteed cash savings.
 
 ## Umbral de aprobación humana

@@ -73,10 +73,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <div className="space-y-2 border-t border-line pt-3">
           <div className="rounded-lg bg-surface p-2.5 shadow-card">
-            <div className="flex items-center justify-between gap-2">
-              <div className="truncate text-[12.5px] font-medium">{workspace.company}</div>
-              {workspace.synthetic && <span className="shrink-0 rounded bg-warn-soft px-1 py-px text-[10.5px] font-medium text-warn">Demo</span>}
-            </div>
+            <div className="truncate text-[12.5px] font-medium">{workspace.company}</div>
             <div className="truncate text-[11.5px] text-muted">{[workspace.industry, workspace.employees].filter(Boolean).join(" · ") || "Client workspace"}</div>
           </div>
           <div className="flex items-center justify-between px-1">
@@ -86,10 +83,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
             <button
               type="button"
-              title="Reset demo workspace"
+              title="Restore workspace"
               onClick={() => {
                 resetDemo();
-                toast("Demo workspace restored", { description: "Northwind Freight's interviews are back." });
+                toast("Workspace restored", { description: "Northwind Freight's interviews are back." });
               }}
               className="pressable grid size-6 place-items-center rounded-md text-muted hover:bg-sunken hover:text-ink"
             >

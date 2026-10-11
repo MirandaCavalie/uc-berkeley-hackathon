@@ -29,7 +29,7 @@ Purple is the product identity. Green, amber, and red remain semantic status col
 
 ## Type and voice
 
-Geist is used consistently. Body text is regular and comfortable. Display text uses medium weight and tight tracking. No italic display treatment, decorative gradients, or all-caps paragraphs.
+Avenir Next is the product typeface, with Helvetica and Arial fallbacks. It gives the interface a familiar editorial rhythm without the geometric look common to AI products. Body text stays regular and comfortable. Display text uses medium weight and restrained tracking. No italic display treatment, decorative gradients, or all-caps paragraphs.
 
 Write like a researcher:
 
@@ -46,7 +46,7 @@ Write like a researcher:
 - Use whitespace to group information before adding borders.
 - Keep the evidence quote near the derived task, score, or recommendation.
 - Prefer a compact summary row followed by progressive detail.
-- On mobile, keep the graph horizontally scrollable and keep the current node visible.
+- On mobile, stack the workflow stages and keep the selected stage detail directly below them.
 
 ## Product surfaces
 
@@ -56,7 +56,9 @@ The landing page has one promise, one product conversation, and one workspace ac
 
 ### Discovery
 
-Discovery opens with four compact signals: sample, coverage, evidence, and quality. The control graph shows the eight agent roles and their gates. The People list is the operational handoff: start, continue, or review a session.
+Discovery opens with the working interview agent and a team-based coverage plan. Its four components are conversation, work record, evidence check, and employee review. The interactive workflow groups the underlying research graph into five understandable stages: plan coverage, set boundaries, run interviews, check evidence, and build decisions. Selecting a stage reveals only what it reads, what it creates, its review rule, and live progress.
+
+Completed research is organized into a single ranked Work patterns table. Rows expand to show the employee evidence behind a process. Adoption readiness summarizes employee experiments, policy constraints, and non-adoption without presenting a wall of quotes. The People table remains the operational handoff for starting, continuing, or reviewing interviews.
 
 ### Opportunities
 
