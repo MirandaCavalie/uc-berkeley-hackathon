@@ -2,7 +2,8 @@
 
 import clsx from "clsx";
 import { Check, CircleStop, Hourglass, TrendingUp, Wrench } from "lucide-react";
-import type { ReactNode } from "react";
+import { useId, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Badge } from "@/components/ui";
 import { money } from "@/lib/engine/opportunities";
 import type { Decision, EvidenceStrength } from "@/lib/engine/roi";
@@ -18,12 +19,54 @@ export const decisionMeta: Record<Decision, { label: string; explanation: string
 export function DecisionBadge({ decision, reason }: { decision: Decision; reason?: string }) {
   const meta = decisionMeta[decision];
   const detail = `${meta.explanation}${reason ? ` ${reason}` : ""}`;
+  const tooltipId = useId();
+  const anchor = useRef<HTMLSpanElement>(null);
+  const [tooltip, setTooltip] = useState({ open: false, left: 0, top: 0 });
+
+  function showTooltip() {
+    const rect = anchor.current?.getBoundingClientRect();
+    if (!rect) return;
+    const width = Math.min(320, window.innerWidth - 24);
+    const left = Math.min(window.innerWidth - width - 12, Math.max(12, rect.right - width));
+    setTooltip({ open: true, left, top: rect.bottom + 8 });
+  }
+
+  function hideTooltip() {
+    setTooltip((current) => ({ ...current, open: false }));
+  }
+
   return (
-    <span title={detail} aria-label={`${meta.label}: ${detail}`} className="inline-flex cursor-help">
+    <span
+      ref={anchor}
+      tabIndex={0}
+      aria-describedby={tooltipId}
+      aria-label={`${meta.label}: ${detail}`}
+      onMouseEnter={showTooltip}
+      onMouseLeave={hideTooltip}
+      onFocus={showTooltip}
+      onBlur={hideTooltip}
+      className="inline-flex rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent/35"
+    >
       <Badge tone={meta.tone}>
         {meta.icon}
         {meta.label}
       </Badge>
+      {typeof document !== "undefined" && createPortal(
+        <span
+          id={tooltipId}
+          role="tooltip"
+          aria-hidden={!tooltip.open}
+          style={{ left: tooltip.left, top: tooltip.top, width: "min(320px, calc(100vw - 24px))" }}
+          className={clsx(
+            "pointer-events-none fixed z-50 rounded-xl bg-ink px-3.5 py-3 text-left text-[12px] leading-5 text-white shadow-raised transition-[opacity,transform] duration-150 ease-out",
+            tooltip.open ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
+          )}
+        >
+          <span className="block font-semibold">{meta.explanation}</span>
+          {reason && <span className="mt-1 block text-white/70">{reason}</span>}
+        </span>,
+        document.body,
+      )}
     </span>
   );
 }
