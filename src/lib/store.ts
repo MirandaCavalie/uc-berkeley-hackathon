@@ -33,6 +33,22 @@ interface State {
   clearWorkspace: () => void;
 }
 
+function withRoiDefaults(roi?: Partial<RoiAssumptions>): RoiAssumptions {
+  return {
+    ...defaultRoi,
+    ...roi,
+    capture: { ...defaultRoi.capture, ...roi?.capture },
+    runCost: { ...defaultRoi.runCost, ...roi?.runCost },
+    adoptionCeilings: roi?.adoptionCeilings?.length === 5 ? roi.adoptionCeilings : defaultRoi.adoptionCeilings,
+  };
+}
+
+/** v1 saved `roi` without builderRate, adoptionCeilings and runCost; the default persist merge is shallow. */
+export function migratePersisted(persisted: unknown) {
+  const saved = persisted as { roi?: Partial<RoiAssumptions> } | undefined;
+  return { ...saved, roi: withRoiDefaults(saved?.roi) };
+}
+
 const uid = () => Math.random().toString(36).slice(2, 10);
 const now = () => new Date().toISOString();
 
@@ -81,7 +97,12 @@ export const useStore = create<State>()(
       clearWorkspace: () =>
         set({ ...initial(), workspace: { company: "Your company", industry: "", employees: "", synthetic: false, teamRoster: [] }, interviews: [] }),
     }),
-    { name: "fieldwork", version: 1, skipHydration: true },
+    {
+      name: "fieldwork",
+      version: 2,
+      skipHydration: true,
+      migrate: (persisted) => migratePersisted(persisted) as State,
+    },
   ),
 );
 

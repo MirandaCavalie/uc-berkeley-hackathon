@@ -5,6 +5,9 @@ import { OTHER, processByName, type ProcessDef } from "./processes";
 export const defaultRoi: RoiAssumptions = {
   hourlyCost: 55,
   capture: { automation: 0.8, agent: 0.6, skill: 0.4, human: 0 },
+  builderRate: 120,
+  adoptionCeilings: [0.4, 0.55, 0.7, 0.8, 0.9],
+  runCost: { automation: 50, skill: 30, agent: 400, human: 0 },
 };
 
 export const dimensions: { key: Dimension; label: string; inverted: boolean; weight: number }[] = [

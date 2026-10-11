@@ -14,6 +14,7 @@ const nav = [
   { href: "/opportunities", step: 2, label: "Opportunities", sub: "Decide where AI fits" },
   { href: "/roadmap", step: 3, label: "Roadmap", sub: "What to build, in order" },
   { href: "/my-work", step: 4, label: "My work", sub: "Put AI to work for you" },
+  { href: "/dashboard", step: 5, label: "AI returns", sub: "Where AI pays off" },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {

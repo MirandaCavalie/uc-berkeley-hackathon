@@ -134,6 +134,38 @@ export interface ResearchRun {
 export interface RoiAssumptions {
   hourlyCost: number;
   capture: Record<Solution, number>;
+  /** $/h for the people building a solution. */
+  builderRate: number;
+  /** Adoption ceiling for adoption scores 1–5 (index 0 = score 1). */
+  adoptionCeilings: [number, number, number, number, number];
+  /** Monthly run cost per solution. Skills are priced per person covered. */
+  runCost: Record<Solution, number>;
+}
+
+/** One month of follow-up reports for a live initiative. `month` is 1-based from `liveSince`. */
+export interface MonthlyReport {
+  month: number;
+  hoursReported: number;
+  usefulRate: number;
+  reports: number;
+}
+
+/** A roadmap initiative in pilot or production, linked to its opportunity by id (process slug). */
+export interface TrackedInitiative {
+  id: string;
+  opportunityId: string;
+  name: string;
+  teams: string[];
+  solution: Solution;
+  status: "pilot" | "production";
+  /** "simulated" is demo seed data; "my-work" comes from employees' helper feedback. */
+  source: "simulated" | "my-work";
+  liveSince: string;
+  buildCost: number;
+  monthlyRunCost: number;
+  peopleCovered: number;
+  activePeople: number;
+  reports: MonthlyReport[];
 }
 
 export type Dimension = "feasibility" | "dataReadiness" | "risk" | "effort" | "adoption";

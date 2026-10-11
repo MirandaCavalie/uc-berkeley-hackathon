@@ -43,9 +43,11 @@ Click **Reset demo workspace** first.
 
 **0:25 – 1:15 · Discovery.** Open the demo. "We interviewed Northwind Freight, a 640-person logistics company: 10 people, 6 teams, in 4 days." Point at the **Work map**: Customer Support spends 152 hours a month answering the same shipment questions. Open **Dana Okafor** (View): show the probe. She said "Quantities never match," and the interviewer asked for the last time it happened. Point at **AI already in use**: 7 of 10 already use AI on their own.
 
-**1:15 – 2:20 · Decision.** Click **Decide where AI fits**. "Jev made 78 decisions in under a second." Point at the solution mix. Open **Customer replies & FAQs**: AI skill, with confidence; the readiness bars; the quotes behind it; the blueprint with its human checkpoint. Then **Scheduling & coordination**: "The rules said automation; Jev said agent, at 99%, because every booking means juggling capacity, calendars, and calls." Show **Negotiation & relationships**: kept human, because five people said so.
+**1:15 – 2:05 · Decision.** Click **Decide where AI fits**. "Jev made 78 decisions in under a second." Point at the solution mix. Open **Customer replies & FAQs**: AI skill, with confidence; the readiness bars; the quotes behind it; the blueprint with its human checkpoint. Then **Scheduling & coordination**: "The rules said automation; Jev said agent, at 99%, because every booking means juggling capacity, calendars, and calls." Show **Negotiation & relationships**: kept human, because five people said so.
 
-**2:20 – 2:50 · Roadmap.** "11 initiatives, 534 hours a month back, starting with 3 quick wins this month." Point at the three columns, then **Kept human**.
+**2:05 – 2:30 · Roadmap.** "11 initiatives, 534 hours a month back, starting with 3 quick wins this month." Point at the three columns, then **Kept human**.
+
+**2:30 – 2:50 · AI returns.** Open **AI returns**. "Predicted vs. reported — scale this, fix that, stop this." Point at the table: **Reporting & dashboards** beat its forecast (+16%) → Scale. **Status updates & follow-ups**: only 31% of people use it → Fix. **Inbox & ticket triage**: $330 a month of reported capacity against a $400 agent run cost → Stop. Then **Where to invest next**: Scheduling & coordination. Say it once: the follow-up is labelled simulated.
 
 **2:50 – 3:00 · Close.** "One week from kickoff to roadmap. In 90 days, the same people answer again, and we measure what actually came back."
 
