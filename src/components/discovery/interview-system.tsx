@@ -43,7 +43,7 @@ export function InterviewSystem({ interviews, onOpen }: { interviews: Interview[
               <div className="grid gap-2 sm:grid-cols-3">
                 <RuntimeFact icon={GitBranch} label="Runtime" value="LangGraph" />
                 <RuntimeFact icon={Route} label="Routing" value="Jev + guardrails" />
-                <RuntimeFact icon={Save} label="Memory" value="Every answer" />
+                <RuntimeFact icon={Save} label="Checkpoint" value="Every turn" />
               </div>
               {nextInterview && (
                 <Button className="mt-4" variant="accent" onClick={() => onOpen(nextInterview.id)} icon={<ArrowRight className="size-3.5" />}>
