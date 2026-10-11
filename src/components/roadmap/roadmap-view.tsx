@@ -1,10 +1,10 @@
 "use client";
 
+import clsx from "clsx";
 import { ClipboardCopy, Map as MapIcon, Printer, RefreshCcw } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { JevStamp } from "@/components/shared";
-import { Button, Card, Empty, PageHeader, SectionTitle, Skeleton, SolutionBadge, Stat } from "@/components/ui";
+import { Button, Card, Empty, PageHeader, SectionTitle, Skeleton, SolutionBadge } from "@/components/ui";
 import { discoveryStats } from "@/lib/engine/interview";
 import { money, otherProcess, phaseMeta, roadmap, type RoadmapPhase } from "@/lib/engine/opportunities";
 import { blueprint, processByName, solutionMeta } from "@/lib/engine/processes";
@@ -15,11 +15,10 @@ import { useDecisions } from "@/lib/use-decisions";
 const planFor = (o: Opportunity) => blueprint(processByName(o.process) ?? otherProcess, o.solution, o.tools, o.teams);
 
 export function RoadmapView() {
-  const { opportunities, analysis, completed } = useDecisions();
+  const { opportunities, completed } = useDecisions();
   const hydrated = useHydrated();
   const interviews = useStore((s) => s.interviews);
   const company = useStore((s) => s.workspace.company);
-  const hourlyCost = useStore((s) => s.roi.hourlyCost);
   const phases = roadmap(opportunities);
   const build = phases.filter((p) => p.phase !== "keep");
   const keep = phases.find((p) => p.phase === "keep")!;
@@ -37,10 +36,10 @@ export function RoadmapView() {
     return (
       <div>
         <PageHeader title="AI roadmap" />
-        <Skeleton className="mb-8 h-56" />
-        <div className="grid gap-4 lg:grid-cols-3">
+        <Skeleton className="mb-10 h-24" />
+        <div className="space-y-4">
           {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-80" />
+            <Skeleton key={i} className="h-48" />
           ))}
         </div>
       </div>
@@ -72,41 +71,29 @@ export function RoadmapView() {
         }
       />
 
-      <section className="mb-8">
-        <Card className="overflow-hidden">
-          <div className="bg-accent px-6 py-5 text-white">
-            <div className="text-[12.5px] text-white/70">{company}</div>
-            <div className="mt-1 max-w-3xl text-[20px] leading-snug font-semibold tracking-tight">
-              {initiatives} AI initiatives that give back {hours.toLocaleString()} hours a month, starting with {phases[0].items.length} quick wins
-              this month.
+      <section className="mb-10">
+        <Card className="grid grid-cols-2 divide-line sm:grid-cols-4 sm:divide-x">
+          {[
+            { label: "Hours back / month", value: hours.toLocaleString() },
+            { label: "Annual value", value: money(value) },
+            { label: "Initiatives", value: initiatives },
+            { label: "Interviews", value: stats.completed },
+          ].map((s) => (
+            <div key={s.label} className="px-6 py-5">
+              <div className="text-[12.5px] text-muted">{s.label}</div>
+              <div className="mt-1 text-[28px] leading-none font-semibold tracking-tight text-ink tabular-nums">{s.value}</div>
             </div>
-          </div>
-          <div className="grid gap-6 p-6 sm:grid-cols-4">
-            <Stat label="Hours back per month" value={hours.toLocaleString()} tone="accent" />
-            <Stat label="Annual value" value={money(value)} sub={`at $${hourlyCost}/h loaded cost`} />
-            <Stat label="Initiatives" value={initiatives} sub={`+ ${keep.items.length} kept human`} />
-            <Stat label="Built from" value={`${stats.completed} interviews`} sub={`${stats.teams} teams${stats.days ? ` in ${stats.days} days` : ""}`} />
-          </div>
-          <div className="border-t border-line px-6 py-3">
-            {analysis ? (
-              <JevStamp judgments={analysis.judgments} createdAt={analysis.createdAt} warning={analysis.warning} />
-            ) : (
-              <span className="text-[12px] text-muted">
-                Rule-based draft.{" "}
-                <Link href="/opportunities" className="font-medium text-accent hover:underline">
-                  Run Jev in Opportunities
-                </Link>{" "}
-                to decide each initiative.
-              </span>
-            )}
-          </div>
+          ))}
         </Card>
       </section>
 
-      <section className="mb-10 grid gap-4 lg:grid-cols-3">
-        {build.map((p) => (
-          <PhaseColumn key={p.phase} phase={p} />
-        ))}
+      <section className="mb-10">
+        <SectionTitle title="The plan" />
+        <ol className="relative">
+          {build.map((p, i) => (
+            <Phase key={p.phase} phase={p} last={i === build.length - 1} />
+          ))}
+        </ol>
       </section>
 
       {keep.items.length > 0 && (
@@ -158,37 +145,45 @@ export function RoadmapView() {
   );
 }
 
-function PhaseColumn({ phase: p }: { phase: RoadmapPhase }) {
+function Phase({ phase: p, last }: { phase: RoadmapPhase; last: boolean }) {
   const meta = phaseMeta[p.phase];
+  const first = p.phase === "now";
   return (
-    <div className="rounded-xl bg-sunken/60 p-3">
-      <div className="mb-3 flex items-baseline justify-between px-1">
-        <div>
-          <div className="text-[14px] font-semibold">{meta.label}</div>
-          <div className="text-[12px] text-muted">{meta.window}</div>
-        </div>
-        <div className="text-right text-[12px] text-muted tabular-nums">
-          <div className="font-medium text-ink">{p.recoverableHours} h/mo</div>
-          {money(p.annualValue)}/yr
-        </div>
+    <li className="relative grid gap-4 pb-8 pl-8 md:grid-cols-[180px_1fr] md:gap-8">
+      {!last && <span className="absolute top-5 bottom-0 left-[7px] w-px bg-line-strong" />}
+      <span
+        className={clsx(
+          "absolute top-1 left-0 size-[15px] rounded-full border-2",
+          first ? "border-accent bg-accent" : "border-line-strong bg-surface",
+        )}
+      />
+      <div>
+        <div className="text-[15px] font-semibold tracking-tight text-ink">{meta.label}</div>
+        <div className="text-[12.5px] text-muted">{meta.window}</div>
+        <div className="mt-3 text-[20px] leading-none font-semibold tracking-tight tabular-nums">{p.recoverableHours} h/mo</div>
+        <div className="mt-1 text-[12.5px] text-muted tabular-nums">{money(p.annualValue)}/yr</div>
       </div>
-      <div className="space-y-2">
-        {p.items.length === 0 && <div className="rounded-lg border border-dashed border-line-strong px-3 py-6 text-center text-[12.5px] text-faint">Nothing here yet</div>}
-        {p.items.map((o) => (
-          <Card key={o.id} className="p-3.5">
-            <div className="flex items-start justify-between gap-2">
-              <span className="text-[13.5px] leading-snug font-semibold tracking-tight">{o.process}</span>
-              <SolutionBadge solution={o.solution} />
+      {p.items.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-line-strong px-4 py-6 text-center text-[12.5px] text-faint">Nothing here yet</div>
+      ) : (
+        <Card className="divide-y divide-line overflow-hidden">
+          {p.items.map((o) => (
+            <div key={o.id} className="flex items-start gap-4 px-4 py-3.5">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[14px] font-semibold tracking-tight">{o.process}</span>
+                  <SolutionBadge solution={o.solution} />
+                </div>
+                <p className="mt-1 text-[12.5px] leading-relaxed text-muted">{planFor(o).headline}</p>
+              </div>
+              <div className="shrink-0 text-right text-[13px] font-semibold tabular-nums">
+                {o.recoverableHours} <span className="font-normal text-muted">h/mo</span>
+              </div>
             </div>
-            <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-2">{planFor(o).headline}</p>
-            <div className="mt-2 flex items-center justify-between text-[11.5px] text-muted">
-              <span className="truncate">{o.teams.join(", ")}</span>
-              <span className="shrink-0 tabular-nums">{o.recoverableHours} h/mo back</span>
-            </div>
-          </Card>
-        ))}
-      </div>
-    </div>
+          ))}
+        </Card>
+      )}
+    </li>
   );
 }
 
