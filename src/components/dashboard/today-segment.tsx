@@ -25,14 +25,10 @@ export function TodaySegment({ tracked, summary }: { tracked: InitiativeTracking
         </Empty>
       ) : (
         <>
-          <Card className="mb-10 grid gap-6 p-6 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="mb-10 grid gap-6 p-6 sm:grid-cols-3">
             <Stat label="Invested to date" value={money(summary.invested)} />
             <Stat label="Value created" value={money(summary.valueReported)} tone="accent" />
             <Stat label="Net return" value={signedMoney(summary.net)} />
-            <Stat
-              label="Payback"
-              value={summary.paidBack ? "Paid back" : summary.recovered === null ? "—" : pct(summary.recovered)}
-            />
           </Card>
 
           <div id="working" className="scroll-mt-6">
