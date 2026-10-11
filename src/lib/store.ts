@@ -17,6 +17,9 @@ interface State {
   overrides: Record<string, Solution>;
   personalHelpers: PersonalHelper[];
   helperDrafts: Record<string, HelperDraft>;
+  /** App ids each employee connected on My work, keyed by interview id. */
+  connectedApps: Record<string, string[]>;
+  toggleApp: (interviewId: string, appId: string, connected: boolean) => void;
   saveHelperDraft: (interviewId: string, draft: HelperDraft | null) => void;
   savePersonalHelper: (helper: PersonalHelper) => void;
   removePersonalHelper: (id: string) => void;
@@ -60,12 +63,17 @@ const initial = () => ({
   overrides: {},
   personalHelpers: [] as PersonalHelper[],
   helperDrafts: {} as Record<string, HelperDraft>,
+  connectedApps: {} as Record<string, string[]>,
 });
 
 export const useStore = create<State>()(
   persist(
     (set) => ({
       ...initial(),
+      toggleApp: (interviewId, appId, connected) => set((s) => {
+        const current = (s.connectedApps[interviewId] ?? []).filter((id) => id !== appId);
+        return { connectedApps: { ...s.connectedApps, [interviewId]: connected ? [...current, appId] : current } };
+      }),
       saveHelperDraft: (interviewId, draft) => set((s) => {
         const helperDrafts = { ...s.helperDrafts };
         if (draft) helperDrafts[interviewId] = draft;

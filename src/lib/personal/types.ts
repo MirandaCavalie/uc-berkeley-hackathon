@@ -17,6 +17,13 @@ export interface HelperConfig {
   source: Meeting["source"];
   meeting: Meeting;
   notes: string;
+  flow?: FlowConfig;
+}
+
+export interface FlowConfig {
+  trigger: { app: string; event: string };
+  action: { app: string; action: string };
+  checkpoint: string;
 }
 
 export interface MeetingBrief {

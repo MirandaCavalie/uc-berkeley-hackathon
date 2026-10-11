@@ -1,20 +1,22 @@
 "use client";
 
+import clsx from "clsx";
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, BookOpen, Check, ChevronRight, Copy, Gauge, Network, Printer, ShieldCheck, Sparkles, Target, Wrench } from "lucide-react";
+import { ArrowRight, BookOpen, Check, ChevronDown, Copy, Lightbulb, Plus, Sparkles, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { initialConfig, progressFor } from "@/lib/personal/meeting";
-import { buildEmployeeProfile, employeeReportMarkdown, type EmployeeProfile, type PersonalOpportunity } from "@/lib/personal/profile";
+import { buildEmployeeProfile } from "@/lib/personal/profile";
+import { CALENDAR_APP, aiLevel, appsFor, findApp, lessonsFor, levels, type AppDef, type Lesson } from "@/lib/personal/coach";
 import type { HelperDraft, HelperRun, PersonalHelper } from "@/lib/personal/types";
 import { useHydrated, useStore } from "@/lib/store";
 import type { Interview, Workspace } from "@/lib/types";
 import { useDecisions } from "@/lib/use-decisions";
-import { Badge, Button, Card, Empty, Field, Input, PageHeader, SolutionBadge, Stat } from "../ui";
-import { MeetingBuilder } from "./meeting-builder";
+import { Button, Card, Empty, Field, Input, PageHeader, SectionTitle, SolutionBadge } from "../ui";
+import { AppIcon, FlowBuilder, Result, flowFor, goalFor, requestJson, selectStyle, useGoogleStatus } from "./flow-builder";
 
-export const selectStyle = "w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-[13px] outline-accent";
-const tabs = ["Report", "AI roadmap", "My helpers", "Progress"] as const;
+const tabs = ["Learn", "My helpers", "Progress"] as const;
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 type Tab = (typeof tabs)[number];
 
 export function PersonalWorkspace({ initialEmployee = "", calendarResult = "" }: { initialEmployee?: string; calendarResult?: string }) {
@@ -22,7 +24,6 @@ export function PersonalWorkspace({ initialEmployee = "", calendarResult = "" }:
   const interviews = useStore((state) => state.interviews);
   const workspace = useStore((state) => state.workspace);
   const [selected, setSelected] = useState(initialEmployee);
-  const [returning, setReturning] = useState(Boolean(calendarResult));
   const people = interviews.filter((interview) => interview.status === "completed");
   const employee = people.find((interview) => interview.id === selected) ?? people[0];
 
@@ -30,7 +31,7 @@ export function PersonalWorkspace({ initialEmployee = "", calendarResult = "" }:
   if (!employee)
     return (
       <Empty icon={<BookOpen />} title="Your journey starts with a conversation" action={<Link href="/discovery" className="text-accent">Go to Discovery →</Link>}>
-        Complete an employee interview to create their report, AI roadmap, and personal helper.
+        Complete an employee interview to get a personal AI coach and helpers.
       </Empty>
     );
 
@@ -39,159 +40,401 @@ export function PersonalWorkspace({ initialEmployee = "", calendarResult = "" }:
       <PageHeader
         title="My work"
         actions={
-          <label className="flex items-center gap-2 text-xs text-muted">
-            Employee
-            <select
-              aria-label="Employee profile"
-              className={selectStyle}
-              value={employee.id}
-              onChange={(event) => {
-                setSelected(event.target.value);
-                setReturning(false);
-                window.history.replaceState(null, "", `/my-work?employee=${encodeURIComponent(event.target.value)}`);
-              }}
-            >
-              {people.map((person) => <option key={person.id} value={person.id}>{person.name} · {person.role}</option>)}
-            </select>
-          </label>
+          <select
+            aria-label="Employee profile"
+            className={clsx(selectStyle, "w-auto")}
+            value={employee.id}
+            onChange={(event) => {
+              setSelected(event.target.value);
+              window.history.replaceState(null, "", `/my-work?employee=${encodeURIComponent(event.target.value)}`);
+            }}
+          >
+            {people.map((person) => <option key={person.id} value={person.id}>{person.name} · {person.role}</option>)}
+          </select>
         }
       />
-      <EmployeeWork key={employee.id} employee={employee} workspace={workspace} interviews={interviews} returning={returning} calendarResult={returning ? calendarResult : ""} />
+      <EmployeeWork key={employee.id} employee={employee} workspace={workspace} interviews={interviews} calendarResult={calendarResult} />
     </>
   );
 }
 
-function EmployeeWork({ employee, workspace, interviews, returning, calendarResult }: { employee: Interview; workspace: Workspace; interviews: Interview[]; returning: boolean; calendarResult: string }) {
+function EmployeeWork({ employee, workspace, interviews, calendarResult }: { employee: Interview; workspace: Workspace; interviews: Interview[]; calendarResult: string }) {
   const { opportunities } = useDecisions();
   const roi = useStore((state) => state.roi);
   const allHelpers = useStore((state) => state.personalHelpers);
   const draft = useStore((state) => state.helperDrafts[employee.id]);
   const saveDraft = useStore((state) => state.saveHelperDraft);
-  const [tab, setTab] = useState<Tab>("Report");
-  const [building, setBuilding] = useState(returning && Boolean(draft));
+  const connected = useStore((state) => state.connectedApps[employee.id]) ?? [];
+  const [tab, setTab] = useState<Tab>(calendarResult ? "My helpers" : "Learn");
+  const [building, setBuilding] = useState(Boolean(calendarResult && draft));
   const helpers = allHelpers.filter((helper) => helper.interviewId === employee.id);
   const profile = buildEmployeeProfile(employee, workspace, interviews, opportunities, roi);
+  const lessons = lessonsFor(employee, workspace, profile.opportunities);
+  const apps = appsFor(employee);
   const progress = progressFor(helpers);
+  const level = aiLevel(employee, helpers);
 
   function begin(taskId?: string, helper?: PersonalHelper) {
-    const next: HelperDraft = helper
-      ? { helperId: helper.id, step: 2, config: helper.config }
-      : { step: 0, config: initialConfig(employee, workspace, taskId ?? profile.primary?.taskIds[0]) };
-    saveDraft(employee.id, next);
+    if (helper) {
+      saveDraft(employee.id, { helperId: helper.id, step: 2, config: helper.config });
+    } else {
+      const base = initialConfig(employee, workspace, taskId ?? lessons.find((l) => l.solution !== "human")?.task.id);
+      const lesson = lessons.find((l) => l.task.id === base.taskId);
+      const next: HelperDraft = {
+        step: 0,
+        config: {
+          ...base,
+          goal: lesson ? goalFor(lesson.task.name) : base.goal,
+          flow: flowFor(lesson, apps, connected, employee.keepHuman),
+          source: "manual",
+          meeting: { id: "manual", title: lesson ? `${lesson.task.name} example` : "Example", start: "", attendees: [], description: lesson?.task.pain ?? "", source: "manual" },
+        },
+      };
+      saveDraft(employee.id, next);
+    }
+    setTab("My helpers");
     setBuilding(true);
-  }
-
-  async function copyReport() {
-    await navigator.clipboard.writeText(employeeReportMarkdown(profile));
-    toast.success("Personal report copied");
   }
 
   if (building && draft)
     return (
-      <MeetingBuilder employee={employee} workspace={workspace} draft={draft} calendarResult={calendarResult} onClose={() => setBuilding(false)} onSaved={() => { setBuilding(false); setTab("My helpers"); }} />
+      <FlowBuilder
+        employee={employee}
+        workspace={workspace}
+        draft={draft}
+        apps={apps}
+        connected={connected}
+        lessons={lessons}
+        onClose={() => setBuilding(false)}
+        onSaved={() => setBuilding(false)}
+      />
     );
 
-  return (
-    <div className="enter space-y-7">
-      <section className="rounded-2xl bg-ink p-6 text-white sm:p-8">
-        <div className="flex flex-wrap items-start justify-between gap-5">
-          <div>
-            <div className="mb-3 flex flex-wrap gap-2"><Badge tone="accent">Personal AI workspace</Badge><Badge>{profile.report.quality}/100 evidence</Badge></div>
-            <h2 className="font-display text-3xl tracking-tight">{employee.name}</h2>
-            <p className="mt-1 text-sm text-white/65">{employee.role} · {employee.team} · {workspace.company}</p>
-            <p className="mt-4 max-w-2xl text-sm leading-6 text-white/75">Your interview has been turned into a personal work report, a prioritized AI roadmap, and a helper you can shape around real work.</p>
-          </div>
-          <div className="grid min-w-56 grid-cols-2 gap-3 text-right">
-            <div><div className="text-2xl font-semibold">{profile.report.totalHoursPerWeek}</div><div className="text-xs text-white/55">hours/week mapped</div></div>
-            <div><div className="text-2xl font-semibold">{profile.estimatedCapacityPerMonth}</div><div className="text-xs text-white/55">hours/month potential</div></div>
-          </div>
-        </div>
-      </section>
+  const firstName = employee.name.split(" ")[0];
+  const aiTasks = lessons.filter((l) => l.solution !== "human").length;
 
-      <div className="flex gap-6 overflow-x-auto border-b border-line" role="tablist" aria-label="Personal workspace">
-        {tabs.map((name) => <button key={name} role="tab" aria-selected={tab === name} className={`shrink-0 pb-3 text-sm ${tab === name ? "border-b-2 border-accent font-medium text-accent" : "text-muted"}`} onClick={() => setTab(name)}>{name}{name === "My helpers" && helpers.length > 0 ? ` (${helpers.length})` : ""}</button>)}
+  return (
+    <div className="enter space-y-8">
+      <Card className="overflow-hidden">
+        <div className="p-6">
+          <div className="text-[12.5px] text-muted">{employee.role} · {employee.team} · {workspace.company}</div>
+          <p className="mt-1 max-w-3xl text-[17px] leading-relaxed text-ink">
+            Hi {firstName}. AI can take the repetitive part of <span className="font-semibold">{aiTasks} of your {lessons.length} tasks</span>. You keep the judgment
+            {employee.keepHuman ? <span className="text-muted">: {lowerFirst(employee.keepHuman.split(/(?<=\.)\s/)[0].replace(/\.$/, ""))}</span> : null}.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 border-t border-line sm:grid-cols-4 sm:divide-x sm:divide-line">
+          {[
+            { label: "Hours / week mapped", value: profile.report.totalHoursPerWeek },
+            { label: "Could come back / month", value: `${profile.estimatedCapacityPerMonth} h` },
+            { label: "Helpers", value: helpers.length },
+            { label: "Useful runs", value: progress.useful },
+          ].map((s) => (
+            <div key={s.label} className="px-6 py-4">
+              <div className="text-[12.5px] text-muted">{s.label}</div>
+              <div className="mt-1 text-[24px] leading-none font-semibold tracking-tight tabular-nums">{s.value}</div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <div className="flex gap-6 border-b border-line" role="tablist" aria-label="My work">
+        {tabs.map((name) => (
+          <button key={name} role="tab" aria-selected={tab === name} onClick={() => setTab(name)} className={clsx("-mb-px shrink-0 border-b-2 pb-3 text-[13.5px]", tab === name ? "border-accent font-medium text-ink" : "border-transparent text-muted hover:text-ink")}>
+            {name}
+            {name === "My helpers" && helpers.length > 0 && <span className="ml-1.5 text-faint">{helpers.length}</span>}
+          </button>
+        ))}
       </div>
 
-      {tab === "Report" && <ReportView profile={profile} onCopy={copyReport} />}
-      {tab === "AI roadmap" && <RoadmapView profile={profile} draft={draft} onBuild={begin} onContinue={() => setBuilding(true)} />}
-      {tab === "My helpers" && <HelpersView helpers={helpers} draft={draft} onBuild={() => begin()} onContinue={() => setBuilding(true)} onOpen={(helper) => begin(undefined, helper)} />}
+      {tab === "Learn" && <LearnView lessons={lessons} level={level} onBuild={begin} />}
+      {tab === "My helpers" && <HelpersView employee={employee} apps={apps} connected={connected} helpers={helpers} lessons={lessons} draft={draft} onBuild={begin} onContinue={() => setBuilding(true)} />}
       {tab === "Progress" && <ProgressView helpers={helpers} progress={progress} />}
     </div>
   );
 }
 
-function ReportView({ profile, onCopy }: { profile: EmployeeProfile; onCopy: () => void }) {
-  const { employee, report, company } = profile;
+function LearnView({ lessons, level, onBuild }: { lessons: Lesson[]; level: number; onBuild: (taskId?: string) => void }) {
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div><h3 className="text-[16px] font-semibold">Personal work report</h3><p className="mt-1 text-sm text-muted">Everything below comes from this employee’s interview and the shared company analysis.</p></div>
-        <div className="flex gap-2"><Button icon={<Copy size={14} />} onClick={onCopy}>Copy report</Button><Button icon={<Printer size={14} />} onClick={() => window.print()}>Print</Button></div>
-      </div>
+    <div className="space-y-8">
+      <section>
+        <SectionTitle title="Your AI level" />
+        <Card className="p-5">
+          <ol className="grid grid-cols-4 gap-1.5">
+            {levels.map((l, i) => (
+              <li key={l.label}>
+                <div className={clsx("h-1.5 rounded-full", i <= level ? "bg-accent" : "bg-sunken")} />
+                <div className={clsx("mt-2 text-[12px]", i === level ? "font-semibold text-ink" : "text-muted")}>{l.label}</div>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-4 flex items-center gap-2 text-[13px] text-ink-2">
+            <ArrowRight className="size-3.5 text-accent" />
+            <span><span className="font-medium">Next step:</span> {levels[level].next}</span>
+          </p>
+        </Card>
+      </section>
 
-      <Card className="grid gap-6 p-6 sm:grid-cols-4">
-        <Stat label="Recurring work" value={`${report.totalHoursPerMonth} h/mo`} sub={`${report.taskCount} tasks reported`} tone="accent" />
-        <Stat label="Personal opportunities" value={profile.opportunities.length} sub="linked to company roadmap" />
-        <Stat label="Capacity potential" value={`${profile.estimatedCapacityPerMonth} h/mo`} sub="at expected adoption" />
-        <Stat label="Evidence quality" value={`${report.quality}/100`} sub="specificity + traceability" />
-      </Card>
+      <section>
+        <SectionTitle title="Get better at each part of your job" meta={lessons.length} />
+        <div className="space-y-2">
+          {lessons.map((l, i) => <LessonCard key={l.task.id} lesson={l} defaultOpen={i === 0} onBuild={onBuild} />)}
+        </div>
+      </section>
+    </div>
+  );
+}
 
-      <div className="grid gap-5 lg:grid-cols-[1.55fr_1fr]">
-        <Card className="overflow-hidden">
-          <div className="border-b border-line px-5 py-4"><h3 className="text-sm font-semibold">Work captured in the interview</h3><p className="mt-1 text-xs text-muted">Every task stays linked to the employee’s own words.</p></div>
-          <div className="divide-y divide-line">
-            {employee.tasks.map((task) => {
-              const matched = profile.opportunities.find((item) => item.taskIds.includes(task.id));
-              return <div key={task.id} className="p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><div className="font-medium">{task.name}</div><div className="mt-1 text-xs text-muted">{task.process} · {task.tools.join(", ") || "No tools recorded"}</div></div><div className="flex items-center gap-2"><span className="text-sm font-medium tabular-nums">{task.hoursPerWeek} h/wk</span>{matched && <SolutionBadge solution={matched.solution} />}</div></div><blockquote className="mt-3 border-l-2 border-accent pl-3 text-[13px] leading-5 text-ink-2">“{task.pain || "No friction example was recorded."}”</blockquote></div>;
+function LessonCard({ lesson: l, defaultOpen, onBuild }: { lesson: Lesson; defaultOpen: boolean; onBuild: (taskId?: string) => void }) {
+  const [open, setOpen] = useState(defaultOpen);
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(l.prompt);
+      toast.success("Prompt copied", { description: "Paste it into your AI tool and add today's example." });
+    } catch {
+      toast.error("Clipboard unavailable. Select the prompt to copy it.");
+    }
+  }
+  return (
+    <Card className="overflow-hidden">
+      <button type="button" onClick={() => setOpen((v) => !v)} className="flex w-full items-center gap-4 p-4 text-left">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[14.5px] font-semibold tracking-tight">{l.task.name}</span>
+            <SolutionBadge solution={l.solution} />
+          </div>
+          {l.task.pain && <div className="mt-0.5 truncate text-[12.5px] text-muted">“{l.task.pain}”</div>}
+        </div>
+        <div className="hidden text-right text-[13px] font-semibold tabular-nums sm:block">
+          {l.task.hoursPerWeek} <span className="font-normal text-muted">h/wk</span>
+        </div>
+        <ChevronDown className={clsx("size-4 shrink-0 text-muted transition-transform duration-200", open && "rotate-180")} />
+      </button>
+      {open && (
+        <div className="enter space-y-5 border-t border-line p-5">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg bg-accent-soft/50 px-4 py-3">
+              <div className="flex items-center gap-1.5 text-[12px] font-medium text-accent"><Sparkles className="size-3.5" /> AI can</div>
+              <p className="mt-1 text-[13px] leading-relaxed text-ink-2">{l.aiDoes}</p>
+            </div>
+            <div className="rounded-lg bg-human-soft/60 px-4 py-3">
+              <div className="flex items-center gap-1.5 text-[12px] font-medium text-human"><UserCheck className="size-3.5" /> You keep</div>
+              <p className="mt-1 text-[13px] leading-relaxed text-ink-2">{l.youKeep}</p>
+            </div>
+          </div>
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-[12px] font-medium text-muted">Try this prompt today</div>
+              <Button size="sm" variant="ghost" icon={<Copy className="size-3.5" />} onClick={copy}>Copy</Button>
+            </div>
+            <pre className="max-h-64 overflow-auto rounded-lg bg-paper p-4 font-sans text-[12.5px] leading-relaxed whitespace-pre-wrap text-ink-2 shadow-[inset_0_0_0_1px_var(--color-line)]">{l.prompt}</pre>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="flex max-w-xl gap-2 text-[12.5px] leading-relaxed text-ink-2">
+              <Lightbulb className="mt-0.5 size-3.5 shrink-0 text-accent" />
+              {l.tip}
+            </p>
+            {l.solution !== "human" && (
+              <Button variant="accent" size="sm" icon={<Plus className="size-3.5" />} onClick={() => onBuild(l.task.id)}>Make it a helper</Button>
+            )}
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function HelpersView({ employee, apps, connected, helpers, lessons, draft, onBuild, onContinue }: { employee: Interview; apps: AppDef[]; connected: string[]; helpers: PersonalHelper[]; lessons: Lesson[]; draft?: HelperDraft; onBuild: (taskId?: string, helper?: PersonalHelper) => void; onContinue: () => void }) {
+  const toggleApp = useStore((s) => s.toggleApp);
+  const [status, setStatus] = useGoogleStatus(employee.id);
+  const [busy, setBusy] = useState<string | null>(null);
+  const isConnected = (app: AppDef) => (app.id === CALENDAR_APP && status?.connected) || connected.includes(app.id);
+  const built = new Set(helpers.map((h) => h.config.taskId));
+  const suggestions = lessons.filter((l) => l.solution !== "human" && !built.has(l.task.id)).slice(0, 3);
+
+  async function connect(app: AppDef) {
+    if (app.id === CALENDAR_APP && status?.configured) {
+      setBusy(app.id);
+      try {
+        if (status.connected) {
+          await requestJson("/api/integrations/google/disconnect", { method: "POST" });
+          setStatus({ ...status, connected: false });
+        } else {
+          const data = await requestJson("/api/integrations/google/connect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ interviewId: employee.id }) });
+          window.location.assign(data.url);
+        }
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Connection failed.");
+      } finally {
+        setBusy(null);
+      }
+      return;
+    }
+    toggleApp(employee.id, app.id, !connected.includes(app.id));
+  }
+
+  return (
+    <div className="space-y-8">
+      <section>
+        <SectionTitle title="Your apps" meta={`${apps.filter(isConnected).length} of ${apps.length} connected`} />
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {apps.map((app) => {
+            const on = isConnected(app);
+            const usedIn = employee.tasks.filter((t) => t.tools.some((tool) => tool.toLowerCase() === app.name.toLowerCase())).length;
+            return (
+              <Card key={app.id} className="flex items-center gap-3 p-3">
+                <AppIcon app={app} />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[13.5px] font-semibold">{app.name}</div>
+                  <div className="text-[11.5px] text-muted">{usedIn ? `In ${usedIn} of your tasks` : "Read your meetings"}</div>
+                </div>
+                <Button size="sm" variant={on ? "secondary" : "accent"} loading={busy === app.id} onClick={() => connect(app)} icon={on ? <Check className="size-3.5 text-good" /> : undefined}>
+                  {on ? "Connected" : "Connect"}
+                </Button>
+              </Card>
+            );
+          })}
+        </div>
+      </section>
+
+      <section>
+        <SectionTitle
+          title="My helpers"
+          meta={helpers.length || undefined}
+          action={<Button size="sm" icon={<Plus className="size-3.5" />} onClick={draft ? onContinue : () => onBuild()}>{draft ? "Continue draft" : "New helper"}</Button>}
+        />
+        {helpers.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-line-strong px-6 py-8 text-center text-[13px] text-muted">
+            No helpers yet. Start from a suggestion below. Each one is a small flow you can read, test and change.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {helpers.map((h) => (
+              <Card key={h.id} className="flex flex-wrap items-center gap-4 p-4">
+                <div className="min-w-0 flex-1">
+                  <div className="text-[14px] font-semibold tracking-tight">{h.config.name}</div>
+                  <FlowChain apps={apps} helper={h} />
+                </div>
+                <span className="text-[12px] text-muted tabular-nums">{h.runs.length} {h.runs.length === 1 ? "run" : "runs"}</span>
+                <Button size="sm" variant="accent" onClick={() => onBuild(undefined, h)}>Open</Button>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {suggestions.length > 0 && (
+        <section>
+          <SectionTitle title="Suggested from your interview" />
+          <div className="grid gap-2 md:grid-cols-3">
+            {suggestions.map((l) => {
+              const flow = flowFor(l, apps, connected, employee.keepHuman);
+              const app = findApp(apps, flow.trigger.app);
+              return (
+                <Card key={l.task.id} className="flex flex-col p-4">
+                  <div className="flex items-center gap-1.5">
+                    <AppIcon app={app} size="sm" />
+                    <ArrowRight className="size-3 text-faint" />
+                    <span className="grid size-6 place-items-center rounded-lg bg-accent text-white"><Sparkles className="size-3" /></span>
+                    <ArrowRight className="size-3 text-faint" />
+                    <span className="grid size-6 place-items-center rounded-lg bg-human text-white"><UserCheck className="size-3" /></span>
+                  </div>
+                  <div className="mt-3 text-[13.5px] font-semibold tracking-tight">{l.task.name}</div>
+                  <p className="mt-1 flex-1 text-[12.5px] leading-relaxed text-muted">
+                    When {flow.trigger.event.toLowerCase()}, AI drafts it and you review. {l.task.hoursPerWeek} h/wk today.
+                  </p>
+                  <Button size="sm" className="mt-3 self-start" onClick={() => onBuild(l.task.id)}>Use this</Button>
+                </Card>
+              );
             })}
           </div>
-        </Card>
+        </section>
+      )}
 
-        <div className="space-y-4">
-          <ContextCard icon={Gauge} title="AI today" text={report.currentAi} />
-          <ContextCard icon={Network} title="Where work waits" text={report.dependencies} />
-          <ContextCard icon={ShieldCheck} title="Keep human" text={report.humanBoundary} human />
-          <Card className="p-5">
-            <div className="flex items-center gap-2 text-sm font-semibold"><Target size={16} className="text-accent" />Company context</div>
-            <p className="mt-3 text-sm text-ink-2">{company.name} · {company.industry} · {company.employees}</p>
-            <p className="mt-2 text-xs leading-5 text-muted">{employee.team}: {company.teamSample} interviewed{company.teamSize ? ` from ${company.teamSize} employees` : ""}. Company total: {company.sampleTotal} completed interviews.</p>
-            <div className="mt-4 border-t border-line pt-4"><div className="text-xs font-medium text-muted">Top company priorities</div><div className="mt-2 flex flex-wrap gap-1.5">{company.priorities.map((priority) => <Badge key={priority}>{priority}</Badge>)}</div></div>
-          </Card>
-        </div>
-      </div>
+      <p className="text-[11.5px] text-faint">Google Calendar uses a real read-only connection when it is set up on the server. Other apps are demo connections that shape your helpers; nothing is sent to them.</p>
     </div>
   );
 }
 
-function ContextCard({ icon: Icon, title, text, human = false }: { icon: typeof Gauge; title: string; text: string; human?: boolean }) {
-  return <Card className="p-5"><div className={`flex items-center gap-2 text-sm font-semibold ${human ? "text-human" : ""}`}><Icon size={16} />{title}</div><p className="mt-2 text-sm leading-6 text-ink-2">{text}</p></Card>;
-}
-
-function RoadmapView({ profile, draft, onBuild, onContinue }: { profile: EmployeeProfile; draft?: HelperDraft; onBuild: (taskId?: string) => void; onContinue: () => void }) {
+function FlowChain({ apps, helper }: { apps: AppDef[]; helper: PersonalHelper }) {
+  const flow = helper.config.flow;
+  if (!flow) return <div className="mt-1 text-[12px] text-muted">{helper.config.goal}</div>;
+  const trigger = findApp(apps, flow.trigger.app);
+  const action = findApp(apps, flow.action.app);
+  const step = "inline-flex items-center gap-1.5 rounded-md bg-sunken px-1.5 py-1 text-[11.5px] text-ink-2";
   return (
-    <div className="space-y-6">
-      {profile.primary && <Card className="overflow-hidden"><div className="grid gap-6 bg-accent p-6 text-white lg:grid-cols-[1.5fr_1fr]"><div><div className="text-xs font-medium text-white/65">RECOMMENDED FIRST MOVE</div><h3 className="mt-2 font-display text-2xl">{profile.primary.action}</h3><p className="mt-3 text-sm leading-6 text-white/75">Based on {profile.primary.hoursPerWeek} hours/week of reported work and the company’s {profile.primary.process.toLowerCase()} opportunity.</p></div><div className="rounded-xl bg-white/10 p-4"><div className="text-xs text-white/60">Potential at expected adoption</div><div className="mt-1 text-3xl font-semibold">{profile.primary.capacityHoursPerMonth} h/mo</div><div className="mt-3 text-xs leading-5 text-white/70">Human checkpoint: {profile.primary.checkpoint}</div></div></div><div className="flex flex-wrap items-center justify-between gap-3 p-5"><div className="flex gap-2"><SolutionBadge solution={profile.primary.solution} /><Badge>{profile.primary.phaseLabel} · {profile.primary.window}</Badge></div><Button variant="accent" icon={<Sparkles size={15} />} onClick={() => draft ? onContinue() : onBuild(profile.primary!.taskIds[0])}>{draft ? "Continue my helper" : "Build this helper"}</Button></div></Card>}
-
-      <div><h3 className="mb-3 text-sm font-semibold">Your 90-day adoption roadmap</h3><div className="grid gap-3 lg:grid-cols-3">{profile.roadmap.map((stage, index) => <Card key={stage.id} className="p-5"><div className="flex items-center justify-between"><span className="grid size-7 place-items-center rounded-full bg-accent text-xs font-semibold text-white">{index + 1}</span><Badge>{stage.window}</Badge></div><div className="mt-4 text-xs font-medium text-accent">{stage.label}</div><h4 className="mt-1 font-semibold">{stage.title}</h4><p className="mt-2 text-[13px] leading-5 text-muted">{stage.detail}</p><p className="mt-4 border-t border-line pt-3 text-xs font-medium text-ink-2">{stage.outcome}</p></Card>)}</div></div>
-      <div><h3 className="mb-3 text-sm font-semibold">Every recommendation for this employee</h3><div className="space-y-3">{profile.opportunities.map((item) => <OpportunityCard key={item.id} item={item} onBuild={onBuild} />)}</div></div>
+    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+      <span className={step}><AppIcon app={trigger} size="sm" />{flow.trigger.event}</span>
+      <ArrowRight className="size-3 text-faint" />
+      <span className={step}><Sparkles className="size-3.5 text-accent" />AI drafts</span>
+      <ArrowRight className="size-3 text-faint" />
+      <span className={step}><UserCheck className="size-3.5 text-human" />You review</span>
+      <ArrowRight className="size-3 text-faint" />
+      <span className={step}><AppIcon app={action} size="sm" />{flow.action.action}</span>
     </div>
   );
-}
-
-function OpportunityCard({ item, onBuild }: { item: PersonalOpportunity; onBuild: (taskId?: string) => void }) {
-  return <Card className="p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h4 className="font-semibold">{item.process}</h4><SolutionBadge solution={item.solution} /><Badge>{item.phaseLabel}</Badge></div><p className="mt-2 text-sm text-ink-2">{item.action}</p><p className="mt-2 text-xs text-muted">{item.taskNames.join(" · ")} · {item.hoursPerWeek} h/week</p><blockquote className="mt-3 text-[12.5px] leading-5 text-muted">“{item.evidence[0]}”</blockquote></div><div className="w-full shrink-0 rounded-lg bg-paper p-3 sm:w-56"><div className="text-xs text-muted">Expected capacity</div><div className="mt-1 text-xl font-semibold">{item.capacityHoursPerMonth} h/mo</div><div className="mt-2 text-xs leading-5 text-muted">Measure: {item.metric}</div>{item.solution !== "human" && <Button className="mt-3 w-full" size="sm" onClick={() => onBuild(item.taskIds[0])}>Build helper</Button>}</div></div><div className="mt-4 rounded-lg bg-human-soft/50 px-3 py-2 text-xs text-ink-2"><span className="font-medium text-human">Human checkpoint: </span>{item.checkpoint}</div></Card>;
-}
-
-function HelpersView({ helpers, draft, onBuild, onContinue, onOpen }: { helpers: PersonalHelper[]; draft?: HelperDraft; onBuild: () => void; onContinue: () => void; onOpen: (helper: PersonalHelper) => void }) {
-  return <div className="space-y-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="text-sm font-semibold">Personal helpers</h3><p className="mt-1 text-sm text-muted">Reusable instructions, employee context, approved sources, and a human checkpoint.</p></div><Button onClick={draft ? onContinue : onBuild} icon={<ArrowRight size={14} />}>{draft ? "Continue draft" : "New helper"}</Button></div>{!helpers.length ? <Empty icon={<Wrench />} title="Build the first personalized helper" action={<Button variant="accent" onClick={draft ? onContinue : onBuild}>Build my helper</Button>}>Start from the highest-value task in this employee’s roadmap, test it, and keep the employee in control.</Empty> : helpers.map((helper) => <Card key={helper.id} className="flex flex-wrap items-center justify-between gap-4 p-5"><div><Badge tone="skill">Personal skill · Run manually</Badge><h3 className="mt-2 font-semibold">{helper.config.name}</h3><p className="mt-1 max-w-lg text-sm text-muted">{helper.config.goal}</p><p className="mt-3 text-xs text-faint">{helper.runs.length} saved {helper.runs.length === 1 ? "run" : "runs"} · Context saved in this browser</p></div><Button variant="accent" onClick={() => onOpen(helper)} icon={<ChevronRight size={15} />}>Open & run</Button></Card>)}</div>;
 }
 
 function ProgressView({ helpers, progress }: { helpers: PersonalHelper[]; progress: ReturnType<typeof progressFor> }) {
-  return <div className="space-y-5"><Card className="grid gap-5 p-6 sm:grid-cols-3"><Stat label="Saved runs" value={progress.runs} sub="AI drafts and local templates" /><Stat label="Marked useful" value={progress.useful} sub="Employee feedback" /><Stat label="Time saved · self-reported" value={`${progress.minutes} min`} sub={`${progress.reports} reports · not measured ROI`} /></Card><p className="text-sm text-muted">Progress belongs to the employee: review each output, record whether it helped, and use that evidence to change the next version.</p>{!progress.runs ? <Empty icon={<Check />} title="No helper runs yet">Run the first helper on real work to start measuring usefulness.</Empty> : helpers.flatMap((helper) => helper.runs.map((run) => <RunReview key={run.id} helper={helper} run={run} />)).reverse()}</div>;
+  const runs = helpers.flatMap((helper) => helper.runs.map((run) => ({ helper, run }))).reverse();
+  return (
+    <div className="space-y-6">
+      <Card className="grid grid-cols-3 divide-x divide-line">
+        {[
+          { label: "Runs", value: progress.runs },
+          { label: "Marked useful", value: progress.useful },
+          { label: "Minutes saved", value: progress.minutes },
+        ].map((s) => (
+          <div key={s.label} className="px-6 py-4">
+            <div className="text-[12.5px] text-muted">{s.label}</div>
+            <div className="mt-1 text-[24px] leading-none font-semibold tracking-tight tabular-nums">{s.value}</div>
+          </div>
+        ))}
+      </Card>
+      {!runs.length ? (
+        <Empty icon={<Check />} title="No runs yet">Run a helper on real work, then come back and say whether it helped.</Empty>
+      ) : (
+        <div className="space-y-2">{runs.map(({ helper, run }) => <RunReview key={run.id} helper={helper} run={run} />)}</div>
+      )}
+    </div>
+  );
 }
 
 function RunReview({ helper, run }: { helper: PersonalHelper; run: HelperRun }) {
   const review = useStore((state) => state.reviewHelperRun);
   const [open, setOpen] = useState(false);
-  return <Card className="p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex flex-wrap gap-2"><Badge>{run.source} context</Badge><Badge tone={run.mode === "ai" ? "accent" : "warn"}>{run.mode === "ai" ? "AI draft" : "Local template"}</Badge></div><h3 className="mt-2 text-sm font-semibold">{run.meetingTitle}</h3><p className="mt-1 text-xs text-muted">{helper.config.name} · {new Date(run.createdAt).toLocaleDateString()}</p></div><Button size="sm" onClick={() => setOpen(!open)}>{open ? "Hide output" : "View output"}</Button></div>{open && <div className="mt-4 rounded-lg bg-paper p-4 text-sm leading-6"><p>{run.brief.summary}</p>{(["agenda", "questions", "checklist", "unknowns"] as const).map((key) => run.brief[key].length ? <div key={key} className="mt-3"><strong>{key === "agenda" ? "Suggested approach" : key === "questions" ? "Questions" : key === "checklist" ? "Checklist" : "Unknowns"}</strong><ul className="list-disc pl-5">{run.brief[key].map((line, index) => <li key={index}>{line}</li>)}</ul></div> : null)}</div>}<div className="mt-5 flex flex-wrap items-end gap-4"><div><p className="mb-2 text-xs text-muted">Was this useful?</p><div className="flex gap-2"><Button size="sm" variant={run.feedback === "useful" ? "accent" : "secondary"} aria-pressed={run.feedback === "useful"} onClick={() => review(helper.id, run.id, { feedback: "useful" })}>Yes, useful</Button><Button size="sm" variant={run.feedback === "needs-work" ? "accent" : "secondary"} aria-pressed={run.feedback === "needs-work"} onClick={() => review(helper.id, run.id, { feedback: "needs-work" })}>Needs work</Button></div></div><Field label="Minutes saved (optional)"><Input aria-label={`Minutes saved for ${run.meetingTitle}`} type="number" min={0} max={1440} className="max-w-40" placeholder="Your estimate" value={run.minutesSaved ?? ""} onChange={(event) => { const value = Number(event.target.value); if (event.target.value === "" || (Number.isFinite(value) && value >= 0 && value <= 1440)) review(helper.id, run.id, { minutesSaved: event.target.value === "" ? undefined : value }); }} /></Field></div></Card>;
+  return (
+    <Card className="p-4">
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="text-[13.5px] font-semibold">{run.meetingTitle}</div>
+          <div className="text-[12px] text-muted">{helper.config.name} · {new Date(run.createdAt).toLocaleDateString()}</div>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Button size="sm" variant={run.feedback === "useful" ? "accent" : "secondary"} aria-pressed={run.feedback === "useful"} onClick={() => review(helper.id, run.id, { feedback: "useful" })}>Useful</Button>
+          <Button size="sm" variant={run.feedback === "needs-work" ? "accent" : "secondary"} aria-pressed={run.feedback === "needs-work"} onClick={() => review(helper.id, run.id, { feedback: "needs-work" })}>Needs work</Button>
+          <Button size="sm" variant="ghost" onClick={() => setOpen(!open)}>{open ? "Hide" : "View"}</Button>
+        </div>
+      </div>
+      {open && (
+        <div className="mt-4 space-y-4">
+          <Result run={run} config={helper.config} />
+          <Field label="Minutes this saved you (optional)">
+            <Input
+              aria-label={`Minutes saved for ${run.meetingTitle}`}
+              type="number"
+              min={0}
+              max={1440}
+              className="max-w-40"
+              value={run.minutesSaved ?? ""}
+              onChange={(event) => {
+                const value = Number(event.target.value);
+                if (event.target.value === "" || (Number.isFinite(value) && value >= 0 && value <= 1440)) review(helper.id, run.id, { minutesSaved: event.target.value === "" ? undefined : value });
+              }}
+            />
+          </Field>
+        </div>
+      )}
+    </Card>
+  );
 }
