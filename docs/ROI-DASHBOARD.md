@@ -1,53 +1,42 @@
 # ROI dashboard — product spec
 
-Route: `/dashboard` · Nav step 5 · "AI returns" · sub: "Where AI pays off"
+Route: `/dashboard` · Nav step 1 · "Dashboard" · sub: "Where AI pays off"
 
 ## Why it exists
 
 In B2B the buyer renews only if they can see the return. During AI transformation there is
 noise: companies don't know where AI is producing results or where to invest next.
-This page answers the buyer's three questions:
-
-1. **How much have we invested, and what is coming back?**
-2. **Where is it working?**
-3. **What should we do next?**
+This page gives the buyer the current return, the initiatives that need action, and the next investments without requiring them to interpret the underlying accounting model.
 
 Buyer: COO, Head of AI, transformation lead.
 
-## Two segments on one page
+## Page structure
 
-### Segment A — "Today: what AI is returning" (tracking)
+### Current return
 
 What is actually happening with initiatives already in pilot or production.
 
-- **Headline row:** invested to date (build + run) · value reported to date · net return ·
-  payback status · initiatives live.
-- **Initiative table** (sortable), one row per tracked initiative:
-  team · solution type · status · adoption (active people ÷ people covered) ·
-  % runs marked useful · predicted hours/month vs reported hours/month · variance % ·
-  invested · value reported · **decision badge**.
-- **Decision rules** (deterministic, shown in a tooltip/legend):
+- **Headline row:** invested to date · value created · net return · payback status.
+- **Initiative table:** initiative · adoption · time saved per month · value created · decision.
+- **Decision rules** are deterministic and explained when the user hovers a decision badge:
   - **Too early** — fewer than `MIN_EVIDENCE` reports (default 5) or live < 30 days.
   - **Stop** — reported monthly value < monthly run cost after 60 days.
   - **Fix** — adoption < 40% OR useful rate < 60%.
   - **Scale** — reported ≥ 90% of predicted AND adoption ≥ 60%.
   - otherwise **On track**.
-- **By team:** small bar view of reported value by team.
 - Includes live feedback from My work helpers (`personalHelpers[].runs`:
   `feedback`, `minutesSaved`) as one initiative ("Meeting preparation skill").
 
-### Segment B — "Forecast: where AI will return" (prediction)
+### Next investments
 
 Our methodology: we mapped the company and interviewed the people doing the work, so we can
 forecast return by area before money is spent.
 
-- **By area** (team, and process within team): forecast monthly hours back, monthly value,
-  build cost, 12-month ROI, payback months, **low / base / high** range, evidence strength.
-- **"Where to invest next":** top 3 not-yet-started opportunities by base-case 12-month net value,
-  each with its assumptions and the quotes behind it.
+- **Investment cards:** top 3 not-yet-started opportunities by base-case 12-month net value. The default view shows net value, time saved, and payback. Cost, range, and evidence are available under “View estimate.”
+- **Forecast by team:** team and process rows with time saved, monthly value, 12-month net, payback, and evidence strength.
 - **Editable assumptions panel:** hourly cost, builder rate, adoption ceiling, run cost per
-  solution type. Changing a value recomputes everything live (store in existing `roi` slice).
-- A visible **"How we forecast"** explainer with the formula below.
+  solution type. It is collapsed by default; changing a value recomputes everything live.
+- **How the forecast works** is a four-step disclosure rather than a permanent wall of methodology.
 
 ## Forecast methodology (deterministic, in `src/lib/engine/roi.ts`)
 
@@ -75,13 +64,11 @@ For each opportunity `o` (from `opportunities.ts`):
 11. **Evidence strength:** Strong (≥ 3 people reported it and Jev confidence ≥ 0.8),
     Medium (2 people or confidence ≥ 0.6), Weak (otherwise).
 
-## Credibility rules (non-negotiable)
+## Credibility rules
 
-- Every number is labelled **Predicted**, **Reported** (employee feedback) or **Measured**
-  (run logs). Never mix them in one total without saying so.
-- Hours freed are **capacity**, not cash. Headline copy: "hours of capacity" with value
-  "at $X/h loaded cost". Never say "savings".
-- Synthetic data is labelled "Demo · simulated 90-day follow-up".
+- Keep the source and basis in the underlying record and estimate disclosure instead of repeating source labels beside every number.
+- Use “time saved” and “value created” in the interface. The calculation remains employee time × loaded hourly cost and does not claim booked cash savings.
+- Explain forecast ranges, team extrapolation, and evidence strength inside the estimate disclosure.
 - All math deterministic and unit-testable; no LLM in the numbers.
 
 ## Demo data: simulated 90-day follow-up

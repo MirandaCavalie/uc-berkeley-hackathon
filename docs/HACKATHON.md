@@ -47,7 +47,7 @@ Click **Reset demo workspace** first.
 
 **2:05 – 2:30 · Roadmap.** "11 initiatives, 534 hours a month back, starting with 3 quick wins this month." Point at the three columns, then **Kept human**.
 
-**2:30 – 2:50 · AI returns.** Open **AI returns**. "Predicted vs. reported — scale this, fix that, stop this." Point at the table: **Reporting & dashboards** beat its forecast (+16%) → Scale. **Status updates & follow-ups**: only 31% of people use it → Fix. **Inbox & ticket triage**: $330 a month of reported capacity against a $400 agent run cost → Stop. Then **Where to invest next**: Scheduling & coordination. Say it once: the follow-up is labelled simulated.
+**2:30 – 2:50 · Dashboard.** Open **Dashboard**. Start with the four numbers: invested, value created, net return, and payback. Point at the live-initiatives table: **Reporting & dashboards** → Scale; **Status updates & follow-ups** → Fix; **Inbox & ticket triage** → Stop. Hover each decision to show the rule and the initiative-specific reason. Then open **Next investments**: Scheduling & coordination leads on 12-month net value. Expand “View estimate” only if the judges ask about cost, range, or evidence.
 
 **2:50 – 3:00 · Close.** "One week from kickoff to roadmap. In 90 days, the same people answer again, and we measure what actually came back."
 

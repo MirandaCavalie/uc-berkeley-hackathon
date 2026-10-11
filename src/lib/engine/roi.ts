@@ -31,9 +31,9 @@ export type EvidenceStrength = "strong" | "medium" | "weak";
 /** Shown in the dashboard's legend, in the order the rules are applied. */
 export const decisionRules: { decision: Decision; label: string; rule: string }[] = [
   { decision: "too-early", label: "Too early", rule: `Fewer than ${MIN_EVIDENCE} reports, or live less than ${MIN_DAYS_LIVE} days.` },
-  { decision: "stop", label: "Stop", rule: `After ${STOP_AFTER_DAYS} days, reported monthly value is below the monthly run cost.` },
+  { decision: "stop", label: "Stop", rule: `After ${STOP_AFTER_DAYS} days, monthly value is below the monthly operating cost.` },
   { decision: "fix", label: "Fix", rule: `Adoption below ${FIX_ADOPTION * 100}% or useful rate below ${FIX_USEFUL * 100}%.` },
-  { decision: "scale", label: "Scale", rule: `Reported hours at least ${SCALE_REPORTED * 100}% of predicted and adoption at least ${SCALE_ADOPTION * 100}%.` },
+  { decision: "scale", label: "Scale", rule: `Time saved reaches at least ${SCALE_REPORTED * 100}% of the forecast and adoption is at least ${SCALE_ADOPTION * 100}%.` },
   { decision: "on-track", label: "On track", rule: "None of the above." },
 ];
 
@@ -286,16 +286,16 @@ export function trackInitiative(init: TrackedInitiative, forecast: OpportunityFo
     reason = `${totalReports} reports over ${daysLive} days.`;
   } else if (daysLive >= STOP_AFTER_DAYS && monthlyReportedValue < init.monthlyRunCost) {
     decision = "stop";
-    reason = `Reported value $${Math.round(monthlyReportedValue)}/mo is below the $${init.monthlyRunCost}/mo run cost.`;
+    reason = `Current value of $${Math.round(monthlyReportedValue)}/mo is below the $${init.monthlyRunCost}/mo operating cost.`;
   } else if (adoption < FIX_ADOPTION || usefulRate < FIX_USEFUL) {
     decision = "fix";
     reason = `Adoption ${pct(adoption)}, useful rate ${pct(usefulRate)}.`;
   } else if (predictedHours !== null && reportedHours >= SCALE_REPORTED * predictedHours && adoption >= SCALE_ADOPTION) {
     decision = "scale";
-    reason = `Reported ${pct(reportedHours / predictedHours)} of predicted with ${pct(adoption)} adoption.`;
+    reason = `Time saved reached ${pct(reportedHours / predictedHours)} of the forecast with ${pct(adoption)} adoption.`;
   } else {
     decision = "on-track";
-    reason = predictedHours ? `Reported ${pct(reportedHours / predictedHours)} of predicted.` : "No forecast to compare against.";
+    reason = predictedHours ? `Time saved reached ${pct(reportedHours / predictedHours)} of the forecast.` : "No forecast is available for comparison.";
   }
 
   return {

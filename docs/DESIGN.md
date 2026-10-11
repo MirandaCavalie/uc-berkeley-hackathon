@@ -70,7 +70,7 @@ The top card states the outcome and its source. Three phases organize the work. 
 
 ### Dashboard
 
-The dashboard is the first engagement surface. It answers what has been invested, what is coming back, where work is working, and what should happen next. If completed interviews exist without a decision run, it starts the analysis and shows progress instead of an empty state.
+The dashboard is the first engagement surface. It opens with four direct metrics: invested to date, value created, net return, and payback. The live-initiatives table uses five columns and puts the decision in the final column; hovering the badge explains both the decision and the evidence behind it. Next investments show net value, time saved, and payback first. Cost, range, assumptions, and methodology use disclosure controls so they remain available without competing with the decision.
 
 ### My work
 
