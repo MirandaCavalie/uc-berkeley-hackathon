@@ -5,7 +5,7 @@ import { ArrowRight, ChevronDown, Scale, Undo2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { NextStep } from "@/components/app-shell";
 import { Confidence, JevStamp } from "@/components/shared";
-import { Badge, Button, Card, Empty, Input, PageHeader, ScoreRing, SectionTitle, Skeleton, SolutionBadge } from "@/components/ui";
+import { Badge, Button, Card, Empty, PageHeader, ScoreRing, SectionTitle, Skeleton, SolutionBadge } from "@/components/ui";
 import { dimensions, money, otherProcess, phaseMeta } from "@/lib/engine/opportunities";
 import { blueprint, processByName, solutionMeta } from "@/lib/engine/processes";
 import { useHydrated, useStore } from "@/lib/store";
@@ -88,8 +88,6 @@ export function OpportunitiesView() {
               ))}
             </div>
           </section>
-
-          <Assumptions />
         </>
       )}
     </div>
@@ -249,39 +247,5 @@ function OpportunityCard({ opportunity: o, rank, defaultOpen }: { opportunity: O
         </div>
       )}
     </Card>
-  );
-}
-
-function Assumptions() {
-  const roi = useStore((s) => s.roi);
-  const setRoi = useStore((s) => s.setRoi);
-  const setCapture = (s: Solution, v: number) => setRoi({ capture: { ...roi.capture, [s]: Math.min(100, Math.max(0, v)) / 100 } });
-  const fields = [
-    { label: "Loaded hourly cost", value: roi.hourlyCost, onChange: (v: number) => setRoi({ hourlyCost: v }), unit: "$/h" },
-    ...(["automation", "agent", "skill"] as Solution[]).map((s) => ({
-      label: `${solutionMeta[s].label} saves`,
-      value: Math.round(roi.capture[s] * 100),
-      onChange: (v: number) => setCapture(s, v),
-      unit: "% of time",
-    })),
-  ];
-  return (
-    <div className="rounded-xl bg-sunken/70 p-4">
-      <div className="mb-3 text-[12.5px] font-medium text-ink-2">Assumptions</div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {fields.map((f) => (
-          <label key={f.label} className="block">
-            <span className="mb-1 block text-[11.5px] text-muted">{f.label}</span>
-            <span className="flex items-center gap-1.5">
-              <Input type="number" min={0} value={f.value} onChange={(e) => f.onChange(Number(e.target.value))} className="h-8 tabular-nums" />
-              <span className="text-[11.5px] whitespace-nowrap text-faint">{f.unit}</span>
-            </span>
-          </label>
-        ))}
-      </div>
-      <p className="mt-3 text-[11.5px] leading-relaxed text-faint">
-        Hours come from what people reported in interviews (hours per week × 4.33). Work kept human counts as zero. Priority weighs value at 35% and Jev&apos;s readiness scores at 65%.
-      </p>
-    </div>
   );
 }
