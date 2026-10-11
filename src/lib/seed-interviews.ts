@@ -290,5 +290,11 @@ export const seedInterviews: Interview[] = scripts.map((s, i) => {
   const blank = blankInterview(`iv-seed-${i + 1}`, s.name, s.role, s.team, s.invitedAt);
   if (!s.answers) return blank;
   const { interview } = runScript(blank, s.answers, seedWorkspace.company);
-  return { ...interview, status: "completed", completedAt: s.completedAt ?? null };
+  return {
+    ...interview,
+    tasks: interview.tasks.map((task, taskIndex) => ({ ...task, id: `t-seed-${i + 1}-${taskIndex + 1}` })),
+    status: "completed",
+    completedAt: s.completedAt ?? null,
+    consent: { status: "accepted", acceptedAt: s.invitedAt },
+  };
 });
