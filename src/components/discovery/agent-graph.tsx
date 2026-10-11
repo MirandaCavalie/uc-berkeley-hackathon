@@ -2,209 +2,164 @@
 
 import {
   ArrowRight,
-  BadgeCheck,
-  BrainCircuit,
-  ClipboardCheck,
-  MessagesSquare,
-  Network,
+  Braces,
+  CheckCircle2,
+  GitBranch,
+  MessageSquareText,
+  Save,
+  ScanSearch,
   ShieldCheck,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Badge, Card } from "@/components/ui";
-import { buildResearchRun } from "@/lib/engine/research-graph";
-import type { Interview, ResearchNodeId, ResearchNodeStatus } from "@/lib/types";
-import { useStore } from "@/lib/store";
+import { replay } from "@/lib/engine/interview";
+import {
+  agentNodes,
+  currentAgentNode,
+  INTERVIEW_AGENT,
+  interviewRuntimeNodes,
+  type InterviewRuntimeNodeId,
+} from "@/lib/engine/interview-agent";
+import type { Interview } from "@/lib/types";
 
-type Stage = {
-  id: string;
-  label: string;
-  icon: typeof Network;
-  nodes: ResearchNodeId[];
-  summary: string;
-  reads: string;
-  creates: string;
-  review: string;
+const iconByNode: Record<InterviewRuntimeNodeId, typeof Braces> = {
+  capture_answer: ShieldCheck,
+  extract_evidence: Braces,
+  evidence_gate: ScanSearch,
+  request_follow_up: MessageSquareText,
+  advance: CheckCircle2,
+  compose_question: MessageSquareText,
+  checkpoint: Save,
 };
 
-const stages: Stage[] = [
-  {
-    id: "coverage",
-    label: "Plan coverage",
-    icon: Network,
-    nodes: ["sampling"],
-    summary: "Sets interview targets by team so the research reflects the company, not only the first people who volunteer.",
-    reads: "Team roster and headcount",
-    creates: "Interview targets by team",
-    review: "Every team must have a target",
-  },
-  {
-    id: "scope",
-    label: "Set boundaries",
-    icon: ShieldCheck,
-    nodes: ["consentContext"],
-    summary: "Explains what will be collected, records consent, and prevents sensitive information from entering the research.",
-    reads: "Employee role and company context",
-    creates: "Approved interview scope",
-    review: "Consent is required before collection",
-  },
-  {
-    id: "interview",
-    label: "Run interviews",
-    icon: MessagesSquare,
-    nodes: ["interviewSessions"],
-    summary: "Asks adaptive follow-up questions about recurring work, time, tools, blockers, AI use, and human judgment.",
-    reads: "Role, team, and prior answers",
-    creates: "Transcript and work record",
-    review: "The employee confirms the record",
-  },
-  {
-    id: "evidence",
-    label: "Check evidence",
-    icon: ClipboardCheck,
-    nodes: ["evidenceExtraction", "qualityAudit"],
-    summary: "Links each finding to an employee answer and identifies missing, vague, or contradictory evidence.",
-    reads: "Submitted interviews",
-    creates: "Traceable findings and follow-ups",
-    review: "Weak evidence returns for clarification",
-  },
-  {
-    id: "recommendations",
-    label: "Build decisions",
-    icon: BrainCircuit,
-    nodes: ["teamSynthesis", "companySynthesis", "roadmapDecision"],
-    summary: "Finds patterns across teams and turns them into opportunities with owners, risks, confidence, and ROI assumptions.",
-    reads: "Reviewed findings across teams",
-    creates: "Company work map and roadmap",
-    review: "A human owner approves each recommendation",
-  },
-];
-
-const statusTone: Record<ResearchNodeStatus, "neutral" | "accent" | "good" | "warn" | "bad"> = {
-  queued: "neutral",
-  running: "accent",
-  needs_review: "warn",
-  complete: "good",
-  blocked: "bad",
-};
-
-const statusLabel: Record<ResearchNodeStatus, string> = {
-  queued: "Waiting",
-  running: "In progress",
-  needs_review: "Needs review",
-  complete: "Complete",
-  blocked: "Blocked",
-};
-
-const priority: Record<ResearchNodeStatus, number> = {
-  blocked: 5,
-  needs_review: 4,
-  running: 3,
-  queued: 2,
-  complete: 1,
-};
+const straightPath: InterviewRuntimeNodeId[] = ["capture_answer", "extract_evidence", "evidence_gate"];
+const finalPath: InterviewRuntimeNodeId[] = ["compose_question", "checkpoint"];
 
 export function AgentGraph({ interviews }: { interviews: Interview[] }) {
-  const workspace = useStore((state) => state.workspace);
-  const run = buildResearchRun(workspace, interviews ?? []);
-  const [selectedId, setSelectedId] = useState(stages[0].id);
-  const selected = stages.find((stage) => stage.id === selectedId) ?? stages[0];
-  const snapshots = selected.nodes.map((id) => run.nodes.find((node) => node.id === id)).filter(Boolean);
-  const status = stageStatus(snapshots.map((node) => node!.status));
-  const progress = stageProgress(snapshots);
+  const activeInterview =
+    interviews.find((interview) => interview.status === "in-progress") ??
+    interviews.find((interview) => interview.status === "invited") ??
+    interviews.find((interview) => interview.status === "completed");
+  const activePhase = activeInterview ? currentAgentNode(replay(activeInterview)) : "context";
+  const lastNodes = useMemo(() => new Set(activeInterview?.agent?.lastNodes ?? []), [activeInterview?.agent?.lastNodes]);
+  const [selectedId, setSelectedId] = useState<InterviewRuntimeNodeId>("evidence_gate");
+  const selected = interviewRuntimeNodes.find((node) => node.id === selectedId) ?? interviewRuntimeNodes[0];
 
   return (
     <Card className="mt-4 overflow-hidden p-5 sm:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-[16px] font-semibold tracking-tight">Interview workflow</h3>
-        <div className="flex items-center gap-4 text-[12px] text-muted">
-          <span><strong className="font-semibold text-ink">{run.metrics.completed}</strong> completed</span>
-          <span><strong className="font-semibold text-ink">{run.metrics.evidenceReady}</strong> reviewed</span>
-          <span><strong className="font-semibold text-ink">{run.metrics.teamsCovered}/{run.metrics.teamsTarget}</strong> teams</span>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <GitBranch className="size-4 text-accent" />
+            <h3 className="text-[16px] font-semibold tracking-tight">Interview agent architecture</h3>
+          </div>
+          <p className="mt-1 text-[12.5px] text-muted">The executable graph that runs on the server for every employee answer.</p>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          <Badge tone="accent">LangGraph</Badge>
+          <Badge>Jev routing</Badge>
+          <Badge>Human review</Badge>
         </div>
       </div>
 
-      <div className="mt-5 grid gap-2 lg:grid-cols-5">
-        {stages.map((stage, index) => {
-          const Icon = stage.icon;
-          const stageSnapshots = stage.nodes.map((id) => run.nodes.find((node) => node.id === id)).filter(Boolean);
-          const stageState = stageStatus(stageSnapshots.map((node) => node!.status));
-          const active = stage.id === selected.id;
-          return (
-            <div key={stage.id} className="relative">
-              <button
-                type="button"
-                onClick={() => setSelectedId(stage.id)}
-                aria-pressed={active}
-                className={`pressable flex h-full min-h-24 w-full items-start gap-3 rounded-xl border p-3 text-left ${active ? "border-accent bg-accent-soft/70" : "border-line bg-paper/55 hover:border-line-strong hover:bg-paper"}`}
-              >
-                <span className={`grid size-8 shrink-0 place-items-center rounded-lg ${active ? "bg-accent text-white" : "bg-surface text-accent shadow-card"}`}>
-                  <Icon className="size-4" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-[10.5px] font-medium text-faint tabular-nums">0{index + 1}</span>
-                  <span className="mt-1 block text-[13px] font-semibold text-ink">{stage.label}</span>
-                  <span className="mt-1 block text-[11px] text-muted">{statusLabel[stageState]}</span>
-                </span>
-              </button>
-              {index < stages.length - 1 && <ArrowRight className="absolute top-1/2 -right-3 z-10 hidden size-4 -translate-y-1/2 rounded-full bg-surface p-0.5 text-faint lg:block" />}
-            </div>
-          );
-        })}
+      <div className="mt-5 grid items-stretch gap-2 lg:grid-cols-[1fr_14px_1fr_14px_1fr_14px_1.15fr_14px_1fr_14px_1fr]">
+        {straightPath.map((nodeId) => (
+          <GraphStep key={nodeId} nodeId={nodeId} selected={selectedId === nodeId} ran={lastNodes.has(nodeId)} onSelect={setSelectedId} arrow />
+        ))}
+
+        <div className="grid gap-2">
+          <GraphStep nodeId="request_follow_up" selected={selectedId === "request_follow_up"} ran={lastNodes.has("request_follow_up")} onSelect={setSelectedId} compact />
+          <GraphStep nodeId="advance" selected={selectedId === "advance"} ran={lastNodes.has("advance")} onSelect={setSelectedId} compact />
+        </div>
+        <div className="hidden items-center justify-center lg:flex"><ArrowRight className="size-3.5 text-faint" /></div>
+
+        {finalPath.map((nodeId, index) => (
+          <GraphStep key={nodeId} nodeId={nodeId} selected={selectedId === nodeId} ran={lastNodes.has(nodeId)} onSelect={setSelectedId} arrow={index < finalPath.length - 1} />
+        ))}
       </div>
 
-      <div className="mt-3 rounded-2xl border border-line bg-paper/55 p-4 sm:p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-2">
-              <h4 className="text-[15px] font-semibold">{selected.label}</h4>
-              <Badge tone={statusTone[status]}>{statusLabel[status]}</Badge>
-            </div>
-            <p className="mt-2 text-[13px] leading-6 text-ink-2">{selected.summary}</p>
+      <div className="mt-3 rounded-xl border border-line bg-paper/55 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[13.5px] font-semibold">{selected.label}</span>
+            <Badge tone={lastNodes.has(selected.id) ? "good" : "neutral"}>{selected.owner}</Badge>
           </div>
-          {progress && (
-            <div className="min-w-32 text-right">
-              <div className="text-[18px] font-semibold tabular-nums">{progress.current}/{progress.target}</div>
-              <div className="text-[11px] text-muted">current progress</div>
-            </div>
-          )}
+          {activeInterview?.agent && <span className="text-[11.5px] text-muted">Last route: {activeInterview.agent.lastRoute === "follow_up" ? "follow-up" : "advance"}</span>}
         </div>
-        <dl className="mt-5 grid gap-3 sm:grid-cols-3">
-          <Detail label="Reads" value={selected.reads} />
-          <Detail label="Creates" value={selected.creates} />
-          <Detail label="Review rule" value={selected.review} />
-        </dl>
-        {progress && (
-          <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-sunken">
-            <div className="h-full rounded-full bg-accent transition-[width]" style={{ width: `${Math.min(100, Math.round((progress.current / Math.max(progress.target, 1)) * 100))}%` }} />
-          </div>
-        )}
-        {selected.id === "recommendations" && (
-          <div className="mt-4 flex items-center gap-2 text-[11.5px] text-muted">
-            <BadgeCheck className="size-3.5 text-accent" /> Recommendations remain drafts until an owner reviews the evidence and assumptions.
-          </div>
-        )}
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <Detail label="Input" value={selected.input} />
+          <Detail label="Output" value={selected.output} />
+          <Detail label="Control" value={selected.rule} />
+        </div>
+      </div>
+
+      <div className="mt-6 border-t border-line pt-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h4 className="text-[13.5px] font-semibold">What the employee experiences</h4>
+          <span className="text-[11.5px] text-muted">
+            {activeInterview ? `${activeInterview.name} · current phase highlighted` : INTERVIEW_AGENT.version}
+          </span>
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-4 lg:grid-cols-8">
+          {agentNodes.map((node, index) => {
+            const active = node.key === activePhase;
+            return (
+              <div key={node.key} className={`rounded-xl border px-3 py-2.5 ${active ? "border-accent bg-accent-soft/70" : "border-line bg-paper/45"}`}>
+                <div className="text-[10px] font-medium text-faint tabular-nums">{String(index + 1).padStart(2, "0")}</div>
+                <div className="mt-1 text-[12px] font-semibold text-ink">{node.label}</div>
+                <div className="mt-0.5 text-[10.5px] leading-4 text-muted">{node.purpose}</div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </Card>
   );
 }
 
-function stageStatus(statuses: ResearchNodeStatus[]): ResearchNodeStatus {
-  if (!statuses.length) return "queued";
-  if (statuses.every((status) => status === "complete")) return "complete";
-  return [...statuses].sort((a, b) => priority[b] - priority[a])[0];
-}
-
-function stageProgress(nodes: Array<{ progress?: { current: number; target: number } } | undefined>) {
-  const values = nodes.map((node) => node?.progress).filter((value): value is { current: number; target: number } => Boolean(value?.target));
-  if (!values.length) return null;
-  return values.reduce((best, value) => (value.target > best.target ? value : best), values[0]);
+function GraphStep({
+  nodeId,
+  selected,
+  ran,
+  onSelect,
+  arrow = false,
+  compact = false,
+}: {
+  nodeId: InterviewRuntimeNodeId;
+  selected: boolean;
+  ran: boolean;
+  onSelect: (id: InterviewRuntimeNodeId) => void;
+  arrow?: boolean;
+  compact?: boolean;
+}) {
+  const node = interviewRuntimeNodes.find((item) => item.id === nodeId)!;
+  const Icon = iconByNode[nodeId];
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => onSelect(nodeId)}
+        aria-pressed={selected}
+        className={`pressable flex w-full items-center gap-2.5 rounded-xl border p-3 text-left ${compact ? "min-h-0" : "min-h-20"} ${selected ? "border-accent bg-accent-soft/70" : "border-line bg-paper/55 hover:border-line-strong hover:bg-paper"}`}
+      >
+        <span className={`grid size-8 shrink-0 place-items-center rounded-lg ${selected ? "bg-accent text-white" : "bg-surface text-accent shadow-card"}`}>
+          <Icon className="size-3.5" />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-[11.5px] font-semibold leading-4 text-ink">{node.label}</span>
+          <span className={`mt-0.5 block text-[10px] ${ran ? "text-good" : "text-faint"}`}>{ran ? "Ran last turn" : node.owner}</span>
+        </span>
+      </button>
+      {arrow && <div className="hidden items-center justify-center lg:flex"><ArrowRight className="size-3.5 text-faint" /></div>}
+    </>
+  );
 }
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-surface p-3 shadow-card">
-      <dt className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-faint">{label}</dt>
-      <dd className="mt-1.5 text-[12.5px] leading-5 text-ink-2">{value}</dd>
+    <div>
+      <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-faint">{label}</div>
+      <div className="mt-1 text-[12px] leading-5 text-ink-2">{value}</div>
     </div>
   );
 }

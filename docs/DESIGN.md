@@ -56,7 +56,7 @@ The landing page has one promise, one product conversation, and one workspace ac
 
 ### Discovery
 
-Discovery opens with the working interview agent and a team-based coverage plan. Its four components are conversation, work record, evidence check, and employee review. The interactive workflow groups the underlying research graph into five understandable stages: plan coverage, set boundaries, run interviews, check evidence, and build decisions. Selecting a stage reveals only what it reads, what it creates, its review rule, and live progress.
+Discovery opens with the working interview agent and a team-based coverage plan. The agent card names the real runtime, router, and checkpoint behavior. The interactive architecture is generated from the same manifest as the server-side LangGraph: capture answer, update work record, check evidence, branch to follow-up or advance, ask the next question, and save the turn. Selecting a node reveals its input, output, and control rule. A separate compact row shows the employee-facing interview phases.
 
 Completed research is organized into a single ranked Work patterns table. Rows expand to show the employee evidence behind a process. Adoption readiness summarizes employee experiments, policy constraints, and non-adoption without presenting a wall of quotes. The People table remains the operational handoff for starting, continuing, or reviewing interviews.
 
@@ -70,7 +70,7 @@ The top card states the outcome and its source. Three phases organize the work. 
 
 ### Dashboard
 
-The dashboard is the first engagement surface. It opens with four direct metrics: invested to date, value created, net return, and payback. The live-initiatives table uses five columns and puts the decision in the final column; hovering the badge explains both the decision and the evidence behind it. Next investments show net value, time saved, and payback first. Cost, range, assumptions, and methodology use disclosure controls so they remain available without competing with the decision.
+The dashboard is the first engagement surface. It opens with three direct metrics: invested to date, value created, and net return. The live-initiatives table uses five columns and puts the decision in the final column; hovering the badge explains both the decision and the evidence behind it. Next investments show net value, time saved, and payback first. Cost, range, assumptions, and methodology use disclosure controls so they remain available without competing with the decision.
 
 ### My work
 

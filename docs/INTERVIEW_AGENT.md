@@ -44,7 +44,20 @@ flowchart TD
 
 The agent should ask for a recent concrete example instead of accepting general sentiment. It should capture the unit of work, frequency, time, systems touched, handoff, failure mode, consequence, current workaround, existing AI behavior, and the human boundary. It should ask the same core dimensions across teams so records can be compared, then use conditional probes for the employee's actual work.
 
-The interview state machine in `src/lib/engine/interview.ts` enforces the safe order:
+Each answer now runs through the compiled `StateGraph` in `src/lib/ai/interview-graph.ts`. Its node IDs and the Discovery diagram come from the same manifest in `src/lib/engine/interview-agent.ts`, so the interface describes executable code rather than a separate mock architecture.
+
+```mermaid
+flowchart LR
+  A[Capture answer] --> B[Update work record]
+  B --> C[Evidence gate]
+  C -->|missing time or vague friction| D[Request follow-up]
+  C -->|evidence sufficient| E[Advance]
+  D --> F[Ask next question]
+  E --> F
+  F --> G[Save turn checkpoint]
+```
+
+The employee-facing interview phases remain bounded and predictable:
 
 ```mermaid
 stateDiagram-v2
@@ -61,7 +74,7 @@ stateDiagram-v2
   EmployeeReview --> [*]
 ```
 
-The server-side Jev router can choose only among allowed transitions (`continue`, `probe`, or `clarify`). It cannot skip a required probe or create an unapproved action. When `JEV_API_KEY` is absent or the model fails, the deterministic graph continues and labels the session as local guardrails.
+The server-side Jev router can choose only among allowed transitions (`continue`, `probe`, or `clarify`). It cannot skip a required probe or create an unapproved action. When `JEV_API_KEY` is absent or the model fails, the same LangGraph run uses deterministic guardrails. The checkpoint records the next phase, active task, route, and nodes executed, while the original transcript remains beside every structured field.
 
 ## Sampling criteria
 
@@ -93,7 +106,7 @@ Synthesis can only consume accepted evidence. A claim such as “invoice matchin
 
 ## Live boundary in this repository
 
-The Discovery browser flow is a real adaptive interviewer: it sends each answer to `/api/interview/next`, and Jev routes the next safe move when `JEV_API_KEY` is configured. The graph, quality auditor, sampling planner, and server research snapshot are implemented and operate on the interview records.
+The Discovery browser flow is a real adaptive interviewer: it sends the current session and each answer to `/api/interview/next`. The server executes a compiled `@langchain/langgraph` graph, Jev routes the next safe move when `JEV_API_KEY` is configured, and the graph returns a trace plus a resumable checkpoint. The UI displays those same runtime nodes and marks the nodes that ran on the previous turn.
 
 The repository still uses local Zustand persistence and seeded Northwind records for the demo. Those records are deliberately marked synthetic and the roadmap node stays in review until a real workspace is used. Email/SMS delivery, SSO, consent storage, audio transcription, a durable database, background queues, and a production model provider are transport and operations layers that must be added before sending this to a real employee population.
 
