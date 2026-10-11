@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { protectLegacyApi } from "@/lib/discovery/auth";
 import { runInterviewGraph } from "@/lib/ai/interview-graph";
 import type { RunnerState } from "@/lib/engine/interview";
 
@@ -48,6 +49,7 @@ const payload = z.object({
 });
 
 export async function POST(request: Request) {
+  const denied = await protectLegacyApi(request); if (denied) return denied;
   const parsed = payload.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Invalid interview turn." }, { status: 400 });
   try {

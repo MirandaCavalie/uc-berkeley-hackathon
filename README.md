@@ -31,6 +31,22 @@ npm run dev
 
 Open http://localhost:3000. The workspace comes preloaded with a synthetic client, Northwind Freight (logistics, 640 employees): 10 completed interviews across Finance, Customer Support, Operations, People, Sales, and IT, plus 2 invited. **Reset demo workspace** in the sidebar restores it.
 
+### Real employee interviews
+
+Open `/research` (also linked from Discovery) for the live research workspace. It is separate from the browser-only Northwind demo. It provides owner sign-in, team-scoped lead access, private employee links, SMTP invitations, durable SQLite sessions, consent, an adaptive LangGraph interview, source-quote auditing, and employee review. `/interview` is the employee-facing flow.
+
+Use Node 22.13 or later. Configure a private `OPENAI_API_KEY`, SMTP credentials and a public HTTPS `FIELDWORK_PUBLIC_URL` before inviting employees by email. Set `FIELDWORK_ADMIN_PASSWORD` for production, or initialize the owner on the local development server. The key shown as configured is not a provider health check. See [SOP.md](SOP.md) for exact setup and limitations. Never paste credentials into an interview or commit them.
+
+The live graph uses two model roles: evidence extraction and adaptive interviewing. A deterministic auditor checks exact employee quote references and evidence coverage between them. Sessions run independently; the graph does not have email or other outbound tools. Invitations are sent by the owner through SMTP. Only submitted, evidence-ready records with usable time estimates can be imported into the work map; full evidence JSON can also be downloaded.
+
+```bash
+npm run check:discovery       # isolated database, model stubs, evidence and concurrency tests
+npm run build
+npm run check:discovery:http  # isolated production server, real HTTP access/lifecycle checks
+```
+
+The test suites never contact a real model or send email. Live model behavior, SMTP acceptance and inbox arrival must still be verified using configured credentials and a pilot recipient. Host on a Node server with persistent disk; ephemeral/serverless SQLite storage is not supported.
+
 ### Jev
 
 Create `.env.local` with `JEV_API_KEY` (see `.env.example`). Without it, everything runs on the rule-based catalog and the UI says so.

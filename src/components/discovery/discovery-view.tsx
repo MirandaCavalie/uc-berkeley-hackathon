@@ -59,6 +59,10 @@ export function DiscoveryView() {
         }
       />
 
+      <Card className="mb-6 flex flex-wrap items-center justify-between gap-4 p-5">
+        <div><h2 className="font-semibold">Interview real employees</h2><p className="mt-1 text-sm text-muted">Private invitations, adaptive conversations, saved evidence, and access for research owners and team leads.</p></div>
+        <NextStep href="/research" label="Open research workspace" />
+      </Card>
       <InterviewSystem interviews={interviews} onOpen={setActive} />
 
       {stats.completed === 0 ? (

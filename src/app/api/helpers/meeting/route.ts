@@ -1,7 +1,9 @@
 import { briefInputSchema, briefSchema, sameOrigin } from "@/lib/personal/schema";
 import { templateBrief, validateConfig } from "@/lib/personal/meeting";
+import { protectLegacyApi } from "@/lib/discovery/auth";
 
 export async function POST(request: Request) {
+  const denied = await protectLegacyApi(request); if (denied) return denied;
   if (!sameOrigin(request)) return Response.json({ error: "Open Fieldwork in the same browser to run this helper." }, { status: 403 });
   const raw = await request.text();
   if (raw.length > 160_000) return Response.json({ error: "This input is too large. Shorten the notes and try again." }, { status: 413 });

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { protectLegacyApi } from "@/lib/discovery/auth";
 import { classifyTasks } from "@/lib/ai/decisions";
 import { jevEnabled } from "@/lib/ai/jev";
 
@@ -18,6 +19,7 @@ const payload = z.object({
 });
 
 export async function POST(request: Request) {
+  const denied = await protectLegacyApi(request); if (denied) return denied;
   if (!jevEnabled()) return Response.json({ error: "Jev is not configured." }, { status: 503 });
   const parsed = payload.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Invalid tasks payload." }, { status: 400 });
