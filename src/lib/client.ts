@@ -1,7 +1,8 @@
 "use client";
 
 import { decisionPayload } from "./engine/opportunities";
-import type { InterviewTurnDecision, InterviewTurnInput } from "./ai/interview-agent";
+import type { InterviewGraphResult } from "./ai/interview-graph";
+import type { RunnerState } from "./engine/interview";
 import type { Interview, JudgmentReport } from "./types";
 
 async function post(path: string, body: unknown): Promise<JudgmentReport> {
@@ -27,14 +28,14 @@ export function decideOpportunities(interviews: Interview[]): Promise<JudgmentRe
   return post("/api/decide/opportunities", { opportunities: decisionPayload(interviews) });
 }
 
-/** Lets the server-side agent choose whether the next turn needs a guarded follow-up. */
-export async function interviewTurn(input: InterviewTurnInput): Promise<InterviewTurnDecision> {
+/** Runs one complete server-side LangGraph turn and returns its checkpointed state. */
+export async function interviewTurn(state: RunnerState, answer: string, company: string): Promise<InterviewGraphResult> {
   const res = await fetch("/api/interview/next", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
+    body: JSON.stringify({ state, answer, company }),
   });
   const data = await res.json().catch(() => ({ error: "The interview agent returned an unreadable response." }));
   if (!res.ok) throw new Error(data.error ?? `Interview agent failed (${res.status}).`);
-  return data as InterviewTurnDecision;
+  return data as InterviewGraphResult;
 }

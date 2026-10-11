@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { ArrowLeft, ArrowUp, Check, ShieldCheck, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowUp, Check, GitBranch, ShieldCheck, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button, Card, Input } from "@/components/ui";
@@ -22,7 +22,9 @@ export function InterviewRunner({ interview, onClose }: { interview: Interview; 
   const [draft, setDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [agentThinking, setAgentThinking] = useState(false);
-  const [agentMode, setAgentMode] = useState<"model" | "local">("local");
+  const [lastRun, setLastRun] = useState<{ route: "follow_up" | "advance"; mode: "model" | "local"; nodes: string[] } | null>(
+    interview.agent ? { route: interview.agent.lastRoute, mode: "local", nodes: interview.agent.lastNodes } : null,
+  );
   const [scopeAccepted, setScopeAccepted] = useState(interview.consent?.status === "accepted");
   const bottom = useRef<HTMLDivElement>(null);
   const iv = state.interview;
@@ -41,24 +43,17 @@ export function InterviewRunner({ interview, onClose }: { interview: Interview; 
     if (!text || agentThinking) return;
     setAgentThinking(true);
     setDraft("");
-    const deterministicNext = answer(state, text);
-    const decision = await interviewTurn({
-      step: state.step,
-      taskName: iv.tasks[state.taskIndex]?.name ?? null,
-      currentTaskPain: iv.tasks[state.taskIndex]?.pain ?? "",
-      answer: text,
-      deterministicNextStep: deterministicNext.step,
-      deterministicNextTask: deterministicNext.interview.tasks[deterministicNext.taskIndex]?.name ?? null,
-    }).catch(() => null);
-    const next =
-      decision?.action === "probe" && state.step === "pain"
-        ? { ...deterministicNext, step: "painProbe" as const }
-        : decision?.action === "clarify" && state.step === "hours"
-          ? { ...deterministicNext, step: "hoursProbe" as const }
-          : deterministicNext;
-    if (decision) setAgentMode(decision.mode);
-    const transcript = [...iv.transcript, { from: "ai" as const, text: prompt }, { from: "person" as const, text }];
-    const updated: Interview = { ...next.interview, transcript, status: "in-progress" };
+    const result = await interviewTurn(state, text, company).catch(() => null);
+    const fallback = answer(state, text);
+    const next = result?.state ?? fallback;
+    const updated: Interview = result
+      ? next.interview
+      : {
+          ...next.interview,
+          transcript: [...iv.transcript, { from: "ai" as const, text: prompt }, { from: "person" as const, text }],
+          status: "in-progress",
+        };
+    if (result) setLastRun({ route: result.route, mode: result.decision.mode, nodes: result.trace.map((event) => event.node) });
     setState({ ...next, interview: updated });
     saveInterview(updated);
     setAgentThinking(false);
@@ -103,7 +98,13 @@ export function InterviewRunner({ interview, onClose }: { interview: Interview; 
         <div className="text-[13px] text-muted">
           {iv.role} · {iv.team}
         </div>
-        {!readOnly && scopeAccepted && <div className="mt-2 text-[12px] text-muted">Current focus: {node.purpose}{agentMode === "model" ? " · adaptive follow-up active" : ""}</div>}
+        {!readOnly && scopeAccepted && (
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted">
+            <span>Current focus: {node.purpose}</span>
+            <span className="inline-flex items-center gap-1 text-accent"><GitBranch className="size-3" /> LangGraph active</span>
+            {lastRun && <span>{lastRun.mode === "model" ? "Jev" : "Guardrail"} routed to {lastRun.route === "follow_up" ? "follow-up" : "next phase"}</span>}
+          </div>
+        )}
       </div>
 
       {!readOnly && !scopeAccepted ? (

@@ -1,8 +1,9 @@
 import "server-only";
 
+import type { InterviewStep } from "../types";
 import { askJev, jevEnabled, type JevQuestion } from "./jev";
 
-export type InterviewStep = "intro" | "tasks" | "hours" | "hoursProbe" | "pain" | "painProbe" | "waits" | "aiToday" | "human" | "rating" | "review";
+export type { InterviewStep } from "../types";
 export type InterviewAction = "continue" | "probe" | "clarify";
 
 export interface InterviewTurnInput {

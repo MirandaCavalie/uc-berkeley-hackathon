@@ -1,4 +1,4 @@
-import type { Interview } from "../types";
+import type { Interview, InterviewStep } from "../types";
 import { classifyTask, OTHER } from "./processes";
 
 export const WEEKS_PER_MONTH = 4.33;
@@ -69,7 +69,7 @@ export function parseTaskList(text: string): string[] {
     .slice(0, MAX_TASKS);
 }
 
-export type Step = "intro" | "tasks" | "hours" | "hoursProbe" | "pain" | "painProbe" | "waits" | "aiToday" | "human" | "rating" | "review";
+export type Step = InterviewStep;
 
 export interface RunnerState {
   step: Step;
@@ -168,6 +168,9 @@ export function answer(state: RunnerState, text: string): RunnerState {
 
 /** Resumes a partly-answered interview from its transcript. */
 export function replay(interview: Interview): RunnerState {
+  if (interview.agent) {
+    return { step: interview.agent.step, taskIndex: interview.agent.taskIndex, interview };
+  }
   const answers = interview.transcript.filter((m) => m.from === "person").map((m) => m.text);
   let state: RunnerState = {
     step: "intro",

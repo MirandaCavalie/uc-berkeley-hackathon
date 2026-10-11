@@ -47,6 +47,16 @@ export interface InterviewMessage {
   text: string;
 }
 
+export type InterviewStep = "intro" | "tasks" | "hours" | "hoursProbe" | "pain" | "painProbe" | "waits" | "aiToday" | "human" | "rating" | "review";
+
+export interface InterviewAgentCheckpoint {
+  step: InterviewStep;
+  taskIndex: number;
+  graphVersion: string;
+  lastRoute: "follow_up" | "advance";
+  lastNodes: string[];
+}
+
 export interface Interview {
   id: string;
   name: string;
@@ -62,6 +72,8 @@ export interface Interview {
   aiToday: string;
   keepHuman: string;
   satisfaction: number | null;
+  /** Resume cursor written by the executable interview graph after every turn. */
+  agent?: InterviewAgentCheckpoint;
   /** Explicit participation scope. Missing means the record still needs a human consent check. */
   consent?: {
     status: "pending" | "accepted" | "declined";
