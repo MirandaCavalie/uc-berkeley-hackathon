@@ -86,7 +86,7 @@ export function InterviewRunner({ interview, onClose }: { interview: Interview; 
         </button>
         <div className="flex items-center gap-3 text-[12px] text-muted">
           <span className="hidden rounded-md bg-accent-soft px-2 py-1 font-medium text-accent sm:inline-flex">
-            {INTERVIEW_AGENT.name} · {node.label} · {agentMode === "model" ? "model route" : "guardrails"}
+            {INTERVIEW_AGENT.name} · {node.label}
           </span>
           <div className="h-1 w-28 overflow-hidden rounded-full bg-sunken">
             <div
@@ -103,6 +103,7 @@ export function InterviewRunner({ interview, onClose }: { interview: Interview; 
         <div className="text-[13px] text-muted">
           {iv.role} · {iv.team}
         </div>
+        {!readOnly && scopeAccepted && <div className="mt-2 text-[12px] text-muted">Current focus: {node.purpose}{agentMode === "model" ? " · adaptive follow-up active" : ""}</div>}
       </div>
 
       {!readOnly && !scopeAccepted ? (

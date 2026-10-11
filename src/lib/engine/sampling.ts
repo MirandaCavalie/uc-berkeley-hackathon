@@ -110,8 +110,8 @@ export function buildSamplePlan(workspace: Workspace, interviews: Interview[], h
 
 export function sampleBrief(company: string, plan: SamplePlan) {
   return [
-    `Fieldwork interview wave · ${company}`,
-    `Sample ${plan.target} people across ${plan.teams.length} teams from a population of ${plan.population}.`,
+    `Fieldwork interview plan · ${company}`,
+    `Target ${plan.target} interviews across ${plan.teams.length} teams from a population of ${plan.population}.`,
     `Each interview takes about ${SAMPLE_POLICY.interviewMinutes} minutes and asks about recurring work, time, tools, friction, handoffs, AI use, and human judgment.`,
     "",
     ...plan.teams.map((team) => `${team.team}: invite ${team.target} people (${team.completed} complete, ${team.remaining} remaining)`),

@@ -28,7 +28,7 @@ export const RESEARCH_AGENTS = {
 } as const satisfies Record<ResearchNodeId, string>;
 
 export const RESEARCH_EDGES: ResearchEdge[] = [
-  { from: "sampling", to: "consentContext", label: "sample + scope" },
+  { from: "sampling", to: "consentContext", label: "coverage + scope" },
   { from: "consentContext", to: "interviewSessions", label: "approved participants" },
   { from: "interviewSessions", to: "evidenceExtraction", label: "transcripts + records" },
   { from: "evidenceExtraction", to: "qualityAudit", label: "evidence objects" },
@@ -41,7 +41,7 @@ export const RESEARCH_EDGES: ResearchEdge[] = [
 export const RESEARCH_NODE_CONTRACTS: Record<ResearchNodeId, Omit<ResearchNodeSnapshot, "status" | "signal" | "detail" | "progress">> = {
   sampling: {
     id: "sampling",
-    label: "Sample the company",
+    label: "Plan interview coverage",
     agent: RESEARCH_AGENTS.sampling,
     stage: "control",
     purpose: "Choose a defensible wave instead of interviewing whoever volunteers first.",
@@ -64,7 +64,7 @@ export const RESEARCH_NODE_CONTRACTS: Record<ResearchNodeId, Omit<ResearchNodeSn
     label: "Interview employees",
     agent: RESEARCH_AGENTS.interviewSessions,
     stage: "collection",
-    purpose: "Run one adaptive, bounded conversation per sampled employee.",
+    purpose: "Run one adaptive, bounded conversation per selected employee.",
     input: "Role, team, context, prior answers",
     output: "Transcript plus structured work record",
     criterion: "Each session covers work, time, tools, friction, waits, AI, and human judgment.",
@@ -85,7 +85,7 @@ export const RESEARCH_NODE_CONTRACTS: Record<ResearchNodeId, Omit<ResearchNodeSn
     agent: RESEARCH_AGENTS.qualityAudit,
     stage: "control",
     purpose: "Find missing fields, vague answers, contradictions, and coverage gaps before synthesis.",
-    input: "Evidence objects and sample progress",
+    input: "Evidence objects and coverage progress",
     output: "Quality score, risk flags, targeted follow-up queue",
     criterion: "Weak evidence loops back for a specific follow-up or human review.",
   },
@@ -189,14 +189,14 @@ export function buildResearchRun(workspace: Workspace, interviews: Interview[], 
   const companyComplete = teamComplete && plan.remaining === 0;
 
   const nodes: ResearchNodeSnapshot[] = [
-    node("sampling", sampleComplete ? "complete" : sampleReady ? "running" : "blocked", `${plan.completed}/${plan.target} interviews`, sampleComplete ? "The wave has reached its target." : `${plan.remaining} sampled people remain in the current wave.`, { current: plan.completed, target: plan.target }),
+    node("sampling", sampleComplete ? "complete" : sampleReady ? "running" : "blocked", `${plan.completed}/${plan.target} interviews`, sampleComplete ? "The interview plan has reached its target." : `${plan.remaining} interviews remain in the current plan.`, { current: plan.completed, target: plan.target }),
     node("consentContext", consentReview ? "needs_review" : completed.length ? "complete" : "queued", `${consentPassed}/${completed.length} scoped`, consentReview ? "Consent or collection scope must be confirmed before this evidence is used in a company synthesis." : "Every completed record has an explicit participation scope.", { current: consentPassed, target: completed.length }),
-    node("interviewSessions", sessionsComplete ? "complete" : completed.length ? "running" : "queued", `${completed.length} sessions`, sessionsComplete ? "Each sampled session has a submitted work record." : "The live interviewer can continue the next invited session." , { current: completed.length, target: plan.target }),
+    node("interviewSessions", sessionsComplete ? "complete" : completed.length ? "running" : "queued", `${completed.length} sessions`, sessionsComplete ? "Each selected session has a submitted work record." : "The live interviewer can continue the next invited session." , { current: completed.length, target: plan.target }),
     node("evidenceExtraction", evidenceReady === completed.length && completed.length > 0 ? "complete" : completed.length ? "needs_review" : "queued", `${evidenceReady}/${completed.length} evidence-ready`, evidenceNeedsReview ? `${evidenceNeedsReview} record${evidenceNeedsReview === 1 ? "" : "s"} need a stronger quote, field, or review.` : "Structured fields remain linked to employee answers.", { current: evidenceReady, target: completed.length }),
     node("qualityAudit", qualityComplete ? "complete" : completed.length ? "needs_review" : "queued", `${qualityScore || "—"}/100 quality`, completed.length ? `${evidenceNeedsReview} record${evidenceNeedsReview === 1 ? "" : "s"} in the follow-up queue.` : "The auditor starts when the first interview is submitted.", { current: evidenceReady, target: completed.length }),
-    node("teamSynthesis", teamComplete ? "complete" : evidenceReady ? "running" : "queued", `${teamsCovered}/${teamsTarget} teams`, teamComplete ? "Every sampled team has quality-passed evidence." : "Team patterns wait for coverage and quality gates.", { current: teamsCovered, target: teamsTarget }),
+    node("teamSynthesis", teamComplete ? "complete" : evidenceReady ? "running" : "queued", `${teamsCovered}/${teamsTarget} teams`, teamComplete ? "Every selected team has reviewed evidence." : "Team patterns wait for coverage and quality gates.", { current: teamsCovered, target: teamsTarget }),
     node("companySynthesis", companyComplete ? "complete" : teamComplete ? "running" : "queued", `${teamsCovered} team maps`, companyComplete ? "Cross-team dependencies can be compared." : "The company graph opens after team maps pass their gates.", { current: teamsCovered, target: teamsTarget }),
-    node("roadmapDecision", companyComplete && !workspace.synthetic ? "complete" : companyComplete ? "needs_review" : "queued", workspace.synthetic ? "demo data" : companyComplete ? "ready for approval" : "waiting for evidence", workspace.synthetic ? "Replace the seeded records with consented employee data before using this as a decision." : "A human owner reviews evidence, risk, and ROI before a recommendation is accepted."),
+    node("roadmapDecision", companyComplete ? "needs_review" : "queued", companyComplete ? "ready for approval" : "waiting for evidence", "A human owner reviews evidence, risk, and ROI before a recommendation is accepted."),
   ];
 
   return {

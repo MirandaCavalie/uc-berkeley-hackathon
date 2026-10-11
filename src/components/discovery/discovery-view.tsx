@@ -1,14 +1,14 @@
 "use client";
 
 import clsx from "clsx";
-import { ArrowRight, ChevronDown, ClipboardList, Sparkle, Trash2, UserPlus, Users } from "lucide-react";
+import { ArrowRight, ChevronDown, ClipboardList, Trash2, UserPlus, Users } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { NextStep } from "@/components/app-shell";
 import { Confidence } from "@/components/shared";
 import { Badge, Button, Card, Empty, Input, PageHeader, SectionTitle, Stat } from "@/components/ui";
 import { judgeTasks } from "@/lib/client";
-import { discoveryStats, effectiveProcess, interviewGuide, WEEKS_PER_MONTH } from "@/lib/engine/interview";
+import { discoveryStats, interviewGuide, WEEKS_PER_MONTH } from "@/lib/engine/interview";
 import { groupTasks, type Group } from "@/lib/engine/opportunities";
 import { useStore } from "@/lib/store";
 import type { Interview } from "@/lib/types";
@@ -40,7 +40,7 @@ export function DiscoveryView() {
               icon={<ClipboardList className="size-4" />}
               onClick={() => {
                 navigator.clipboard?.writeText(interviewGuide(company));
-                toast("Interview guide copied", { description: "Use it to run an interview live, then type the answers in." });
+                toast("Interview guide copied", { description: "Use it to run a facilitated interview outside Fieldwork." });
               }}
             >
               Copy interview guide
@@ -59,7 +59,7 @@ export function DiscoveryView() {
         }
       />
 
-      <InterviewSystem interviews={interviews} />
+      <InterviewSystem interviews={interviews} onOpen={setActive} />
 
       {stats.completed === 0 ? (
         <Empty icon={<Users className="size-5" />} title="No completed interviews yet">
@@ -68,31 +68,16 @@ export function DiscoveryView() {
       ) : (
         <>
           <section className="mb-10">
-            <Card className="grid gap-6 p-6 sm:grid-cols-3 lg:grid-cols-6">
+            <Card className="grid gap-6 p-6 sm:grid-cols-2 lg:grid-cols-4">
               <Stat label="Interviews" value={`${stats.completed}/${stats.invited}`} sub={`${stats.completionRate}%${stats.days ? ` in ${stats.days} days` : ""}`} />
               <Stat label="Teams" value={stats.teams} />
               <Stat label="Tasks mapped" value={stats.taskCount} />
               <Stat label="Hours/month" value={stats.hoursPerMonth.toLocaleString()} sub="in recurring tasks" />
-              <Stat label="Already use AI" value={`${stats.usingAi}/${stats.completed}`} tone="accent" sub="mostly on their own" />
-              <Stat label="Rating" value={stats.avgSatisfaction ?? "—"} sub="of the interview, out of 5" />
             </Card>
           </section>
 
-          <section className="mb-10">
-            <SectionTitle title="Work map" meta="hours per month, by team and process" />
-            <WorkMap interviews={interviews} groups={groups} />
-          </section>
-
-          <section className="mb-10">
-            <SectionTitle title="What people told us" meta={`${groups.length} processes`} />
-            <div className="space-y-2">
-              {groups.map((g, i) => (
-                <ProcessRow key={g.def.name} group={g} defaultOpen={i === 0} />
-              ))}
-            </div>
-          </section>
-
-          <AiToday interviews={interviews} />
+          <WorkPatterns groups={groups} />
+          <AdoptionReadiness interviews={interviews} />
         </>
       )}
 
@@ -115,97 +100,53 @@ function useJevBackfill(interviews: Interview[], save: (iv: Interview) => void) 
 
 const hoursOf = (g: Group) => g.tasks.reduce((n, t) => n + t.hoursPerWeek, 0) * WEEKS_PER_MONTH;
 
-function WorkMap({ interviews, groups }: { interviews: Interview[]; groups: Group[] }) {
-  const done = interviews.filter((i) => i.status === "completed");
-  const teams = [...new Set(done.map((i) => i.team))];
-  const cell = new Map<string, { hours: number; people: Set<string> }>();
-  for (const iv of done) {
-    for (const t of iv.tasks) {
-      const key = `${iv.team}|${effectiveProcess(t)}`;
-      const c = cell.get(key) ?? { hours: 0, people: new Set<string>() };
-      c.hours += t.hoursPerWeek * WEEKS_PER_MONTH;
-      c.people.add(iv.name);
-      cell.set(key, c);
-    }
-  }
-  const max = Math.max(1, ...[...cell.values()].map((c) => c.hours));
+function WorkPatterns({ groups }: { groups: Group[] }) {
+  const [open, setOpen] = useState(groups[0]?.def.name ?? "");
+  const [showAll, setShowAll] = useState(false);
+  const visible = showAll ? groups : groups.slice(0, 6);
   return (
-    <Card className="overflow-x-auto p-4 scrollbar-thin">
-      <table className="w-full border-separate border-spacing-1 text-[11.5px]">
-        <thead>
-          <tr>
-            <th className="w-28" />
-            {groups.map((g) => (
-              <th key={g.def.name} className="h-28 min-w-12 align-bottom font-normal text-muted">
-                <div className="mx-auto w-4 [writing-mode:vertical-rl] rotate-180 text-left whitespace-nowrap">{g.def.name}</div>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {teams.map((team) => (
-            <tr key={team}>
-              <th className="pr-2 text-left text-[12px] font-medium whitespace-nowrap text-ink-2">{team}</th>
-              {groups.map((g) => {
-                const c = cell.get(`${team}|${g.def.name}`);
-                const strength = c ? 0.15 + 0.85 * (c.hours / max) : 0;
-                return (
-                  <td
-                    key={g.def.name}
-                    title={c ? `${team} · ${g.def.name}: ${Math.round(c.hours)} h/mo (${[...c.people].join(", ")})` : undefined}
-                    className="h-9 rounded-md text-center tabular-nums"
-                    style={{
-                      background: c ? `color-mix(in oklab, var(--color-accent) ${Math.round(strength * 100)}%, white)` : "var(--color-sunken)",
-                      color: strength > 0.55 ? "white" : "var(--color-ink-2)",
-                      opacity: c ? 1 : 0.5,
-                    }}
-                  >
-                    {c ? Math.round(c.hours) : ""}
-                  </td>
-                );
-              })}
-            </tr>
+    <section className="mb-10">
+      <SectionTitle title="Work patterns" meta="ranked by time spent" />
+      <Card className="overflow-hidden">
+        <div className="hidden grid-cols-[minmax(220px,1.5fr)_100px_110px_180px_24px] gap-4 border-b border-line bg-paper/55 px-4 py-2.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-faint md:grid">
+          <div>Process</div><div>People</div><div>Time/month</div><div>Signals</div><div />
+        </div>
+        <div className="divide-y divide-line">
+          {visible.map((group) => (
+            <ProcessRow key={group.def.name} group={group} open={open === group.def.name} onToggle={() => setOpen(open === group.def.name ? "" : group.def.name)} />
           ))}
-          <tr>
-            <th className="pt-1 pr-2 text-left text-[11.5px] font-normal text-muted">Total</th>
-            {groups.map((g) => (
-              <td key={g.def.name} className="pt-1 text-center font-medium text-ink tabular-nums">
-                {Math.round(hoursOf(g))}
-              </td>
-            ))}
-          </tr>
-        </tbody>
-      </table>
-    </Card>
+        </div>
+      </Card>
+      {groups.length > 6 && (
+        <Button className="mt-3" size="sm" variant="ghost" onClick={() => setShowAll((value) => !value)}>
+          {showAll ? "Show fewer" : `Show all ${groups.length} processes`}
+        </Button>
+      )}
+    </section>
   );
 }
 
-function ProcessRow({ group: g, defaultOpen }: { group: Group; defaultOpen: boolean }) {
-  const [open, setOpen] = useState(defaultOpen);
+function ProcessRow({ group: g, open, onToggle }: { group: Group; open: boolean; onToggle: () => void }) {
   const people = [...new Set(g.tasks.map((t) => t.person))];
   const roles = [...new Set(g.tasks.map((t) => t.role))];
   return (
-    <Card className="overflow-hidden">
-      <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-4 p-4 text-left">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[14.5px] font-semibold tracking-tight">{g.def.name}</span>
-            {g.waitMentions.length > 0 && (
-              <Badge tone="warn">
-                {g.waitMentions.length} {g.waitMentions.length === 1 ? "person waits" : "people wait"} on this
-              </Badge>
-            )}
-            {g.keepHuman.length > 0 && <Badge tone="human">{g.keepHuman.length} want it human</Badge>}
-          </div>
-          <div className="mt-0.5 truncate text-[12.5px] text-muted">
-            {people.length} {people.length === 1 ? "person" : "people"} · {roles.join(", ")}
-          </div>
+    <div className="overflow-hidden">
+      <button type="button" onClick={onToggle} className="grid w-full grid-cols-[1fr_auto] items-center gap-3 px-4 py-3.5 text-left md:grid-cols-[minmax(220px,1.5fr)_100px_110px_180px_24px] md:gap-4">
+        <div className="min-w-0">
+          <div className="truncate text-[13.5px] font-semibold">{g.def.name}</div>
+          <div className="mt-0.5 truncate text-[11.5px] text-muted">{roles.join(", ")}</div>
         </div>
-        <div className="text-right text-[14px] font-semibold tabular-nums">{Math.round(hoursOf(g))} h/mo</div>
-        <ChevronDown className={clsx("size-4 shrink-0 text-muted transition-transform duration-200", open && "rotate-180")} />
+        <div className="hidden text-[12.5px] text-ink-2 md:block">{people.length}</div>
+        <div className="text-right text-[13px] font-semibold tabular-nums md:text-left">{Math.round(hoursOf(g))} h</div>
+        <div className="hidden flex-wrap gap-1.5 md:flex">
+          {g.waitMentions.length > 0 && <Badge tone="warn">{g.waitMentions.length} waiting</Badge>}
+          {g.keepHuman.length > 0 && <Badge tone="human">{g.keepHuman.length} human review</Badge>}
+          {g.waitMentions.length === 0 && g.keepHuman.length === 0 && <span className="text-[11.5px] text-faint">No flags</span>}
+        </div>
+        <ChevronDown className={clsx("hidden size-4 shrink-0 text-muted transition-transform duration-200 md:block", open && "rotate-180")} />
       </button>
       {open && (
-        <div className="enter border-t border-line px-4 pt-2 pb-4">
+        <div className="enter border-t border-line bg-paper/40 px-4 pt-2 pb-4">
           <div className="divide-y divide-line">
             {g.tasks.map((t) => (
               <div key={t.id} className="grid gap-x-4 gap-y-1 py-2 md:grid-cols-[160px_1fr_70px_auto]">
@@ -229,29 +170,39 @@ function ProcessRow({ group: g, defaultOpen }: { group: Group; defaultOpen: bool
           ))}
         </div>
       )}
-    </Card>
+    </div>
   );
 }
 
-function AiToday({ interviews }: { interviews: Interview[] }) {
+function AdoptionReadiness({ interviews }: { interviews: Interview[] }) {
+  const completed = interviews.filter((interview) => interview.status === "completed");
   const using = interviews.filter((i) => i.status === "completed" && i.aiToday && !/^\s*(no|nope|none|never|not really)\b/i.test(i.aiToday));
-  if (!using.length) return null;
+  const constrained = using.filter((interview) => /policy|approved|sensitive|security|not allowed|cannot|can’t|can't|restricted/i.test(interview.aiToday));
+  const notUsing = completed.length - using.length;
+  const signals = [
+    { label: "Employee experiments", value: using.length, text: "People using AI in their own workflow" },
+    { label: "Policy constraints", value: constrained.length, text: "Interviews mentioning access or data limits" },
+    { label: "No current use", value: notUsing, text: "People who have not adopted an AI tool" },
+  ];
   return (
     <section className="mb-10">
-      <SectionTitle title="AI already in use" meta={`${using.length} people, mostly without a company tool`} />
-      <div className="grid gap-2 md:grid-cols-2">
-        {using.map((iv) => (
-          <figure key={iv.id} className="flex gap-2.5 rounded-xl bg-surface p-3 shadow-card">
-            <Sparkle className="mt-0.5 size-3.5 shrink-0 text-signal" />
-            <div>
-              <blockquote className="text-[13px] leading-relaxed text-ink-2">“{iv.aiToday}”</blockquote>
-              <figcaption className="mt-0.5 text-[11.5px] text-muted">
-                {iv.name}, {iv.role}
-              </figcaption>
+      <SectionTitle title="Adoption readiness" />
+      <Card className="p-5">
+        <div className="grid gap-3 md:grid-cols-3">
+          {signals.map((signal) => (
+            <div key={signal.label} className="rounded-xl bg-paper/65 p-4">
+              <div className="text-[24px] font-semibold tracking-tight tabular-nums">{signal.value}</div>
+              <div className="mt-1 text-[13px] font-semibold">{signal.label}</div>
+              <p className="mt-1 text-[12px] leading-5 text-muted">{signal.text}</p>
             </div>
-          </figure>
-        ))}
-      </div>
+          ))}
+        </div>
+        <p className="mt-4 border-t border-line pt-4 text-[12.5px] leading-5 text-ink-2">
+          {constrained.length > 0
+            ? "The first rollout should use approved tools, keep company data inside policy, and make human review explicit."
+            : "The first rollout should focus on the repeated tasks already visible in employee workflows and keep human review explicit."}
+        </p>
+      </Card>
     </section>
   );
 }
