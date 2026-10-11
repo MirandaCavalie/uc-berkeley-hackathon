@@ -72,7 +72,7 @@ The dashboard is the first engagement surface. It answers what has been invested
 
 ### My work
 
-My work is the employee-facing handoff: a personalized helper, meeting preparation, progress, and connector entry points. It follows the shared roadmap so the employee can act on the recommendation in their own context.
+My work is the employee-facing handoff. It starts with a complete personal report, filters the company opportunity map down to that employee’s tasks, and turns it into a 90-day roadmap. The helper builder starts from a selected roadmap task and keeps the interview evidence, company context, source, metric, and human checkpoint together. Progress records usefulness and self-reported time saved after each run.
 
 ## Motion
 
