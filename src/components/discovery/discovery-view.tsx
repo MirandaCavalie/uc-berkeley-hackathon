@@ -69,7 +69,11 @@ export function DiscoveryView() {
         <>
           <section className="mb-10">
             <Card className="grid gap-6 p-6 sm:grid-cols-2 lg:grid-cols-4">
-              <Stat label="Interviews" value={`${stats.completed}/${stats.invited}`} sub={`${stats.completionRate}%${stats.days ? ` in ${stats.days} days` : ""}`} />
+              <Stat
+                label="Completed interviews"
+                value={stats.completed}
+                sub={`${stats.invited} invited${stats.days ? ` · ${stats.days} days` : ""}`}
+              />
               <Stat label="Teams" value={stats.teams} />
               <Stat label="Tasks mapped" value={stats.taskCount} />
               <Stat label="Hours/month" value={stats.hoursPerMonth.toLocaleString()} sub="in recurring tasks" />
