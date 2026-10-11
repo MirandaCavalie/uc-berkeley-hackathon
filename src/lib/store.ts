@@ -6,6 +6,7 @@ import { persist } from "zustand/middleware";
 import { defaultRoi } from "./engine/opportunities";
 import { blankInterview, seedInterviews, seedWorkspace } from "./seed-interviews";
 import type { Analysis, Interview, RoiAssumptions, Solution, Workspace } from "./types";
+import type { HelperDraft, PersonalHelper, HelperRun } from "./personal/types";
 
 interface State {
   workspace: Workspace;
@@ -14,6 +15,12 @@ interface State {
   analysis: Analysis | null;
   /** Solution types a person chose over Jev's, keyed by opportunity id. */
   overrides: Record<string, Solution>;
+  personalHelpers: PersonalHelper[];
+  helperDrafts: Record<string, HelperDraft>;
+  saveHelperDraft: (interviewId: string, draft: HelperDraft | null) => void;
+  savePersonalHelper: (helper: PersonalHelper) => void;
+  removePersonalHelper: (id: string) => void;
+  reviewHelperRun: (helperId: string, runId: string, review: Pick<HelperRun, "feedback" | "minutesSaved">) => void;
 
   setWorkspace: (patch: Partial<Workspace>) => void;
   inviteInterview: (p: { name: string; role: string; team: string }) => string;
@@ -35,12 +42,23 @@ const initial = () => ({
   roi: defaultRoi,
   analysis: null,
   overrides: {},
+  personalHelpers: [] as PersonalHelper[],
+  helperDrafts: {} as Record<string, HelperDraft>,
 });
 
 export const useStore = create<State>()(
   persist(
     (set) => ({
       ...initial(),
+      saveHelperDraft: (interviewId, draft) => set((s) => {
+        const helperDrafts = { ...s.helperDrafts };
+        if (draft) helperDrafts[interviewId] = draft;
+        else delete helperDrafts[interviewId];
+        return { helperDrafts };
+      }),
+      savePersonalHelper: (helper) => set((s) => ({ personalHelpers: [...s.personalHelpers.filter((h) => h.id !== helper.id), helper] })),
+      removePersonalHelper: (id) => set((s) => ({ personalHelpers: s.personalHelpers.filter((h) => h.id !== id) })),
+      reviewHelperRun: (helperId, runId, review) => set((s) => ({ personalHelpers: s.personalHelpers.map((h) => h.id === helperId ? { ...h, runs: h.runs.map((r) => r.id === runId ? { ...r, ...review } : r) } : h) })),
 
       setWorkspace: (patch) => set((s) => ({ workspace: { ...s.workspace, ...patch } })),
       inviteInterview: ({ name, role, team }) => {
@@ -49,7 +67,7 @@ export const useStore = create<State>()(
         return id;
       },
       saveInterview: (iv) => set((s) => ({ interviews: s.interviews.map((x) => (x.id === iv.id ? iv : x)) })),
-      removeInterview: (id) => set((s) => ({ interviews: s.interviews.filter((x) => x.id !== id) })),
+      removeInterview: (id) => set((s) => ({ interviews: s.interviews.filter((x) => x.id !== id), personalHelpers: s.personalHelpers.filter((h) => h.interviewId !== id), helperDrafts: Object.fromEntries(Object.entries(s.helperDrafts).filter(([key]) => key !== id)) })),
       setRoi: (patch) => set((s) => ({ roi: { ...s.roi, ...patch } })),
       setAnalysis: (analysis) => set({ analysis }),
       override: (id, solution) =>
