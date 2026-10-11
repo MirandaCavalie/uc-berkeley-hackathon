@@ -66,6 +66,14 @@ The first visual question is “what kind of decision is this?” The solution m
 
 The top card states the outcome and its source. Three phases organize the work. “Kept human” has equal visual weight so the product never implies that every task should be automated.
 
+### Dashboard
+
+The dashboard is the first engagement surface. It answers what has been invested, what is coming back, where work is working, and what should happen next. If completed interviews exist without a decision run, it starts the analysis and shows progress instead of an empty state.
+
+### My work
+
+My work is the employee-facing handoff: a personalized helper, meeting preparation, progress, and connector entry points. It follows the shared roadmap so the employee can act on the recommendation in their own context.
+
 ## Motion
 
 Motion is functional: short enter transitions, progress bars that reveal status, and press feedback on controls. Respect `prefers-reduced-motion`. Do not animate decorative gradients or make the brand mark spin.

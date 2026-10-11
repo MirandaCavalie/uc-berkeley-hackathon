@@ -2,7 +2,7 @@
 
 import { Coins } from "lucide-react";
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { Badge, Empty, PageHeader, Skeleton } from "@/components/ui";
 import { forecastByArea, forecastOpportunity, portfolioSummary, reportedValueByTeam, trackInitiative, type ForecastContext } from "@/lib/engine/roi";
 import { FOLLOWUP_LABEL, followupInitiatives } from "@/lib/seed-followup";
@@ -26,11 +26,18 @@ const questions = [
 export function RoiDashboard() {
   const hydrated = useHydrated();
   const asOf = useToday();
-  const { opportunities, analysis, completed } = useDecisions();
+  const { opportunities, analysis, completed, running, run } = useDecisions();
+  const autoRan = useRef(false);
   const workspace = useStore((s) => s.workspace);
   const interviews = useStore((s) => s.interviews);
   const roi = useStore((s) => s.roi);
   const helpers = useStore((s) => s.personalHelpers);
+
+  useEffect(() => {
+    if (!hydrated || !completed || analysis || running || autoRan.current) return;
+    autoRan.current = true;
+    void run();
+  }, [analysis, completed, hydrated, run, running]);
 
   if (!hydrated || !asOf)
     return (
@@ -42,23 +49,35 @@ export function RoiDashboard() {
       </div>
     );
 
-  if (!completed || !analysis)
+  if (!completed)
     return (
       <div>
         <PageHeader title="AI returns" />
         <Empty
           icon={<Coins className="size-5" />}
-          title="No analysis yet"
+          title="Start with Discovery"
           action={
-            <Link href="/opportunities" className="pressable inline-flex h-9 items-center rounded-lg bg-accent px-3.5 text-[13.5px] font-medium text-white hover:bg-accent-2">
-              Go to Opportunities
+            <Link href="/discovery" className="pressable inline-flex h-9 items-center rounded-lg bg-accent px-3.5 text-[13.5px] font-medium text-white hover:bg-accent-2">
+              Interview the team
             </Link>
           }
         >
-          The forecast and tracking are built from the opportunity analysis. Run it in Opportunities first.
+          Complete the first employee interview and Fieldwork will build the rest of the engagement from evidence.
         </Empty>
       </div>
     );
+
+  if (running && !analysis)
+    return (
+      <div>
+        <PageHeader title="AI returns" />
+        <Empty icon={<Coins className="size-5" />} title="Preparing the first return view">
+          Fieldwork is reviewing the completed interviews and turning the evidence into opportunities.
+        </Empty>
+      </div>
+    );
+
+  if (!analysis) return null;
 
   const ctx: ForecastContext = { interviews, roster: workspace.teamRoster, roi, judgments: analysis.judgments };
   const forecasts = new Map(opportunities.map((o) => [o.id, forecastOpportunity(o, ctx)]));

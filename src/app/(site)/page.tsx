@@ -42,10 +42,10 @@ export default function Landing() {
               Decisions
             </a>
             <Link
-              href="/discovery"
+              href="/dashboard"
               className="pressable ml-2 inline-flex h-9 items-center gap-1.5 rounded-lg bg-ink px-3.5 font-medium text-white hover:bg-ink-2"
             >
-              Open demo
+              Open dashboard
             </Link>
           </nav>
         </div>
@@ -64,7 +64,7 @@ export default function Landing() {
               href="/discovery"
               className="pressable inline-flex h-11 items-center gap-2 rounded-lg bg-accent px-5 text-[14.5px] font-medium text-white shadow-[0_1px_2px_rgb(109_69_217/0.35)] hover:bg-accent-2"
             >
-              Open the workspace <ArrowRight className="size-4" />
+              Open the dashboard <ArrowRight className="size-4" />
             </Link>
             <a
               href="/demo/fieldwork-demo.mp4"
@@ -210,10 +210,10 @@ export default function Landing() {
             <p className="mt-2 max-w-lg text-[14.5px] text-white/75">Explore the Fieldwork workspace from interview to decision.</p>
           </div>
           <Link
-            href="/discovery"
+            href="/dashboard"
             className="pressable inline-flex h-11 shrink-0 items-center gap-2 rounded-lg bg-white px-5 text-[14.5px] font-medium text-accent hover:bg-white/90"
           >
-            Open the demo <ArrowRight className="size-4" />
+            Open the dashboard <ArrowRight className="size-4" />
           </Link>
         </div>
       </section>

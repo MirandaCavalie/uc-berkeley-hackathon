@@ -10,11 +10,11 @@ import { useStore } from "@/lib/store";
 import { Wordmark } from "./brand";
 
 const nav = [
-  { href: "/discovery", step: 1, label: "Discovery", sub: "Interview the team" },
-  { href: "/opportunities", step: 2, label: "Opportunities", sub: "Decide where AI fits" },
-  { href: "/roadmap", step: 3, label: "Roadmap", sub: "What to build, in order" },
-  { href: "/my-work", step: 4, label: "My work", sub: "Put AI to work for you" },
-  { href: "/dashboard", step: 5, label: "AI returns", sub: "Where AI pays off" },
+  { href: "/dashboard", step: 1, label: "Dashboard", sub: "Where AI pays off" },
+  { href: "/discovery", step: 2, label: "Discovery", sub: "Interview the team" },
+  { href: "/opportunities", step: 3, label: "Opportunities", sub: "Decide where AI fits" },
+  { href: "/roadmap", step: 4, label: "Roadmap", sub: "What to build, in order" },
+  { href: "/my-work", step: 5, label: "My work", sub: "Put AI to work for you" },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
